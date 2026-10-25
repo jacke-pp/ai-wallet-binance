@@ -9,7 +9,7 @@ Agent ID 的 AI 钱包才能买的新币。私钥在币安手里，每笔交易�
 
 ## 能做什么
 
-- **按合约地址买卖**：Four.meme Agent 币、Flap ID Agent Curve 币、Flap 内盘、PancakeSwap。
+- **按合约地址买卖**：Four.meme Agent 币、Flap ID Agent Curve 币、GANG 发射台、Flap 内盘、PancakeSwap。
 - **狙击**：盯一个币（按创建者、名字或时间）开盘就买；或者抢某个发射台上最先出来的几个 Agent 新币。每个币买多少、
   买几个、每天最多花多少、能接受多高的税，都由你定，没有默认值。
 - **买前检查**：币安公开的代币安全检测，加上用你自己的钱包地址在链上模拟“买一点再全卖掉”，隐藏税和卖不掉的币在花钱前就能看出来。

@@ -11,7 +11,7 @@ and it runs on your own computer or server.
 
 ## What it does
 
-- **Buy and sell by contract address**: Four.meme agent coins, Flap ID Agent Curve coins, Flap and PancakeSwap.
+- **Buy and sell by contract address**: Four.meme agent coins, Flap ID Agent Curve coins, the GANG launchpad, Flap and PancakeSwap.
 - **Snipe**: watch one coin (by creator, name or time) and buy when it opens, or buy the first few new agent coins
   on a launchpad. Every amount, count, daily cap and tax limit comes from you. Nothing has a default.
 - **Check before buying**: Binance's public token audit plus a buy-and-sell-back simulated on the live chain from

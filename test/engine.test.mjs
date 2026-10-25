@@ -125,3 +125,21 @@ test('Binance refusals become plain messages and nothing is executed', async () 
   const w2 = createWallet({ run: async args => args[1] === 'address' ? { success: true, data: [{ binanceChainId: '56', address: '0x00000000000000000000000000000000000000aa' }] } : { success: true, data: { requestId: 'r', requireConfirmation: true } } });
   await assert.rejects(w2.send({ to: '0x00000000000000000000000000000000000000bb', data: '0x' }), /confirmed in its App/);
 });
+
+test('speed-up: a stuck buy is re-sent and the faster copy counts; a buy that just confirmed is left alone', async () => {
+  const f = fakes();
+  const rc = f.rpc.waitReceipt;
+  let level = null;
+  f.rpc.waitReceipt = async (hash, o) => o?.timeoutMs ? null : rc(hash);        // still pending after the wait
+  f.rpc.receipt = async hash => hash === '0xfast' ? { ...(await rc(hash)), transactionHash: '0xfast' } : null;
+  f.wallet.speedUp = async (hash, lv) => { level = lv; return { hash: '0xfast' }; };
+  let eng = createEngine({ rpc: f.rpc, wallet: f.wallet, platforms: [f.platform], cfg: { speedUpAfterSec: 1, speedUpLevel: 'LOW' } });
+  const r = await eng.buy(f.token, '0.01');
+  assert.equal(r.hash, '0xfast');
+  assert.equal(level, 'LOW');
+  f.rpc.receipt = async hash => rc(hash);
+  f.wallet.speedUp = async () => { throw Object.assign(new Error('already confirmed'), { code: 30007002 }); };
+  eng = createEngine({ rpc: f.rpc, wallet: f.wallet, platforms: [f.platform], cfg: { speedUpAfterSec: 1 } });
+  const r2 = await eng.buy(f.token, '0.01');
+  assert.equal(r2.hash, '0xhash');
+});

@@ -82,7 +82,9 @@ gets the proof, send it with `aiwb call`.
    - the most BNB all snipes may spend per day (`--daily-cap`)
    - the highest buy tax they accept, in % (`--max-tax`). On Four agent coins the buyer pays 1% + the creator's tax
      (0–10%) + an opening fee some coins switch on, which falls 49 → 24 → 14 → 9 → 4 → 0% over the first 6 blocks
-     (about 2.7 s). The snipe waits for the total to drop to this number. Flap agent coins charge 1%.
+     (about 2.7 s). The snipe waits for the total to drop to this number. Flap agent coins and the GANG launchpad
+     charge 1%.
+   - which launchpad (`--platform four-agent`, `flap-agent`, `gang` or `all`).
    - optional: only coins from a creator address (`--creator`), with words in the name (`--name`), a time window
      (`--from`/`--until`), a delay in seconds (`--delay`).
    Repeat the settings back and get a yes before running `aiwb snipe add`.
@@ -104,6 +106,11 @@ gets the proof, send it with `aiwb call`.
     to fit. When the market fills (5 BNB) the coin launches at its ...7777 address and holders run `aiwb claim`.
     You can pass either the market address or the coin's ...7777 address. Markets priced in another coin (e.g. BNCB)
     take 3 transactions to buy (swap, approve, buy) and up to 3 to sell.
+  - **GANG launchpad** (the one GANG launched on): each coin is priced in a quote coin (GANG, BNB, USDT, BNCB, ...).
+    A buy is 3 transactions (get the quote coin, approve, buy); 1% fee each way; one wallet may hold at most 1%.
+    In our tests (2026-10-25) Binance let the AI wallet buy there but **blocked every sale on the curve**: tell the
+    user they will most likely hold until the curve fills. After that the coin trades on PancakeSwap V2 against its
+    quote coin and `aiwb` sells it through that pool.
   - Coins that are their own agent-only curve.
 - **Graduated coins** on Flap's normal curve and on PancakeSwap V2.
 - **Any contract call** through the AI wallet (mints, claims), simulated by Binance before it is sent.

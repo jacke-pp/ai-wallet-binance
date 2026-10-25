@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { openingFeePct, detect as fourDetect, watch as fourWatch } from '../lib/platforms/fouragent.mjs';
 import { watch as flapWatch, roundTripCalls } from '../lib/platforms/flapagent.mjs';
 import { LAUNCHPADS, PLATFORMS } from '../lib/platforms/index.mjs';
+import { detect as gangDetect, watch as gangWatch } from '../lib/platforms/gang.mjs';
 import { encodeArgs, ZERO } from '../lib/abi.mjs';
 
 test('Four opening fee falls block by block and only when switched on', () => {
@@ -34,7 +35,7 @@ test('Four detect: agent template only, tax = 1% + creator tax + opening fee', a
 });
 
 test('launchpad watchers are registered and parse creation logs', async () => {
-  assert.deepEqual(Object.keys(LAUNCHPADS).sort(), ['flap-agent', 'four-agent']);
+  assert.deepEqual(Object.keys(LAUNCHPADS).sort(), ['flap-agent', 'four-agent', 'gang']);
   assert.ok(PLATFORMS.length >= 5);
   const pad = a => '0x' + a.slice(2).padStart(64, '0');
   const rpc = { read: async (to, sig) => sig === 'name()' ? 'Cat' : 'CAT' };
@@ -77,4 +78,27 @@ test('snipe daily cap counts only snipe buys', () => {
   record({ kind: 'buy', bnb: '0.002', status: 'ok', source: 'snipe:abc' });
   assert.equal(spentToday(), 0.012);
   assert.equal(spentToday(undefined, Date.now(), { snipesOnly: true }), 0.002);
+});
+
+test('GANG launchpad: recognizes its coins, reads the quote coin, parses new coins', async () => {
+  const pad = a => '0x' + a.slice(2).padStart(64, '0');
+  const quote = '0x' + '7'.repeat(40);
+  const curve = '0x' + pad('0x' + '1'.repeat(40)).slice(2) + pad(quote).slice(2) + '0'.repeat(64 * 8);
+  const rpc = { call: async () => curve, read: async (to, sig) => sig === 'locked()' ? true : 'GANG' };
+  const info = await gangDetect({ rpc, me: ZERO }, '0x' + '2'.repeat(40));
+  assert.equal(info.platform, 'gang');
+  assert.equal(info.agentOnly, true);
+  assert.equal(info.quote, quote);
+  assert.equal(info.quoteSymbol, 'GANG');
+  assert.equal(info.buyTaxPct, 1);
+  assert.equal(await gangDetect({ rpc: { ...rpc, call: async () => '0x' + '0'.repeat(640) }, me: ZERO }, ZERO), null); // unknown coin
+  // Graduated (unlocked): no coin/quote pool yet -> not ours; with the pool -> two hops on PancakeSwap.
+  const grad = pair => ({ ...rpc, read: async (to, sig) => sig === 'locked()' ? false : sig.startsWith('getPair') ? pair : 'GANG' });
+  assert.equal(await gangDetect({ rpc: grad(ZERO), me: ZERO }, ZERO), null);
+  const dex = await gangDetect({ rpc: grad('0x' + '9'.repeat(40)), me: ZERO }, ZERO);
+  assert.equal(dex.phase, 'dex');
+  assert.equal(dex.agentOnly, false);
+  const coin = await gangWatch.parse({ topics: [gangWatch.topics[0], pad('0x' + '2'.repeat(40)), pad('0x' + '1'.repeat(40)), pad(quote)] }, { read: async (to, sig) => sig === 'name()' ? 'Cat' : 'CAT' });
+  assert.deepEqual(coin, { token: '0x' + '2'.repeat(40), creator: '0x' + '1'.repeat(40), quote, name: 'Cat', symbol: 'CAT' });
+  assert.match(gangWatch.topics[0], /^0x[0-9a-f]{64}$/);
 });
