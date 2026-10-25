@@ -1,32 +1,28 @@
 # ai-wallet-binance
 
-Let your AI trade with your own Binance AI wallet.
+让你的 AI 用你自己的币安 AI 钱包交易。
 
-Tell Claude, Codex, DeepSeek or Grok "buy 0.05 BNB of this coin" and it does it from your
-[Binance Agentic Wallet](https://www.binance.com/en/web3wallet), including the new coins that only AI wallets
-with an Agent ID can buy. Binance keeps the key and signs every transaction. This tool never sees a private key,
-and it runs on your own computer or server.
+跟 Claude、Codex、DeepSeek 或 Grok 说一句“这个币买 0.05 BNB”，它就用你的币安 Agentic Wallet 去买，包括只有带
+Agent ID 的 AI 钱包才能买的新币。私钥在币安手里，每笔交易都由币安签名；本工具碰不到私钥，在你自己的电脑或服务器上运行。
 
-[中文说明](https://github.com/jacke-pp/ai-wallet-binance/blob/main/README_zh.md)
+中文 | [English](https://github.com/jacke-pp/ai-wallet-binance/blob/main/README_en.md)
 
-## What it does
+## 能做什么
 
-- **Buy and sell by contract address**: Four.meme agent coins, Flap ID Agent Curve coins, the GANG launchpad, Flap and PancakeSwap.
-- **Snipe**: watch one coin (by creator, name or time) and buy when it opens, or buy the first few new agent coins
-  on a launchpad. Every amount, count, daily cap and tax limit comes from you. Nothing has a default.
-- **Check before buying**: Binance's public token audit plus a buy-and-sell-back simulated on the live chain from
-  your own wallet address, so hidden taxes and coins you can't sell show up before you spend anything.
-- **Mint** NFTs, including ones only AI wallets can mint: give it the contract and the most you'll pay; it finds the
-  mint function and price, checks in a simulation that the NFT really arrives, and can wait for a presale to open.
-- **Your settings**: slippage, gas limit, automatic speed-up of stuck transactions, spending limits, highest buy and
-  sell tax. Taxes are measured by simulating a buy and sale from your own wallet, not just read from the contract.
-- **Keep a journal** of every trade with profit and loss, stored on your machine.
-- **Trade in your browser** if you'd rather click than chat: `aiwb ui` opens a trading page on your own computer
-  with new agent coins as they launch, a live chart, the safety check, one-click buy and sell, holdings and snipes.
+- **按合约地址买卖**：Four.meme Agent 币、Flap ID Agent Curve 币、GANG 发射台、Flap 内盘、PancakeSwap。
+- **狙击**：盯一个币（按创建者、名字或时间）开盘就买；或者抢某个发射台上最先出来的几个 Agent 新币。每个币买多少、
+  买几个、每天最多花多少、能接受多高的税，都由你定，没有默认值。
+- **买前检查**：币安公开的代币安全检测，加上用你自己的钱包地址在链上模拟“买一点再全卖掉”，隐藏税和卖不掉的币在花钱前就能看出来。
+- **Mint**：包括只有 AI 钱包能 mint 的 NFT。给它合约地址和每个最多付多少，它自己找 mint 函数和价格，先模拟确认 NFT
+  真的能到账才发；预售没开可以守着等。
+- **自己调设置**：滑点、gas 上限、交易卡住自动加速、花费上限、最高买入税和卖出税。税率是用你自己的钱包地址模拟买卖实测出来的，不只看合约写的。
+- **记账**：每笔交易和盈亏都记在你自己电脑上。
+- **在浏览器里点着交易**：不想打字就运行 `aiwb ui`，在你自己电脑上打开一个交易页面：Agent 新币一出来就显示，
+  有实时 K 线、买前检查、一键买卖、持仓和狙击。
 
-## Start
+## 开始
 
-You need Node.js 18+ and the Binance App with an AI wallet.
+需要 Node.js 18 以上，和开好 AI 钱包的币安 App。
 
 ```bash
 npm install -g @binance/agentic-wallet
@@ -34,44 +30,39 @@ npm install -g ai-wallet-binance
 aiwb doctor
 ```
 
-Then tell your AI: "run `aiwb agents`, read what it prints, and set me up". It will run `aiwb login`, send you a
-link to confirm in the Binance App, and tell you which App settings to turn on (Agent ID, developer mode).
-(`aiwb agents --path` shows where the instructions file is.)
+然后跟你的 AI 说：“运行 `aiwb agents`，读完它打印的说明，帮我设置好”。它会运行 `aiwb login`，给你一个链接去币安 App
+里确认，再告诉你 App 里要打开哪些设置（Agent ID、开发者模式）。（`aiwb agents --path` 会显示说明文件在哪。）
 
-Or skip the AI and run `aiwb ui`: your browser opens the trading page and shows a QR code; scan it with the Binance
-App to sign in. The page only runs on your computer (127.0.0.1) and only answers the link it printed. Binance keeps
-the keys and signs every trade.
+也可以不用 AI，直接运行 `aiwb ui`：浏览器打开交易页面并显示二维码，用币安 App 扫码登录。页面只在你自己电脑上运行
+（127.0.0.1），只认它打印出来的那个链接。钥匙一直在币安，每笔交易都由币安签名。
 
-In the Binance App, AI wallet settings, set **abnormal transaction handling** to confirm in the App. Binance flags
-trades in coins its audit rates as risky (every coin on the GANG launchpad's curve so far, whose contracts are
-unverified); with auto-reject they fail, with App confirmation they wait for your tap on the phone and then go
-through. `aiwb check` and the trading page tell you before you buy when a coin will need that tap.
+在币安 App 的 AI 钱包设置里，把**异常交易处理**改成在 App 内确认。币安审计评为有风险的币（目前 GANG
+发射台内盘的币都是，合约没开源），每笔交易都会被判成有风险：设成自动拒绝就会失败，设成 App 确认就会推到你手机上，
+点一下确认就成交。买之前 `aiwb check` 和交易页面会提示这个币卖出要不要点确认。
 
-## Talk to it
+## 怎么跟它说
 
-| You say | It runs |
+| 你说 | 它运行 |
 |---|---|
-| "Is 0x... safe?" | `aiwb check 0x...` |
-| "Buy 0.05 BNB of 0x..." | `aiwb buy 0x... 0.05` |
-| "Sell half" | `aiwb sell 0x... 50%` |
-| "Snipe new Four agent coins, 0.02 each, at most 3" | asks you for the daily cap and tax limit, then `aiwb snipe add watch ...` |
-| "How am I doing?" | `aiwb pnl` |
-| "Open the trading page" | `aiwb ui` |
+| “0x... 安全吗？” | `aiwb check 0x...` |
+| “0x... 买 0.05 BNB” | `aiwb buy 0x... 0.05` |
+| “卖一半” | `aiwb sell 0x... 50%` |
+| “狙 Four 的 Agent 新币，每个 0.02，最多 3 个” | 先问你每天上限和最高税，再 `aiwb snipe add watch ...` |
+| “我赚了多少？” | `aiwb pnl` |
+| “打开交易页面” | `aiwb ui` |
 
-## Before you use it
+## 用之前要知道
 
-- While an agent coin is still on its agent-only curve, Binance may refuse to let an AI wallet sell it. Expect to
-  hold until it moves to PancakeSwap, and only buy what you can afford to hold.
-- Binance checks every transaction before signing and may refuse it. The daily limit and risk settings live in the
-  App, not here.
-- Free public BSC nodes are used by default. For faster snipes set your own: `aiwb config set rpc <url>`.
-- This is a tool, not advice. New coins are risky and most go to zero.
+- Agent 币还在只限 AI 钱包的内盘阶段时，币安可能不让 AI 钱包卖出。做好拿到它上 PancakeSwap 的准备，只买你拿得住的量。
+- 每笔交易币安都会先检查再签名，可能拒绝。每日限额和风控设置在 App 里，不在这里。
+- 默认用免费的公共 BSC 节点。想狙得更快可以换成自己的：`aiwb config set rpc <地址>`。
+- 这是工具，不是投资建议。新币风险很高，大多数会归零。
 
-## Seen in use
+## 谁在用
 
 - [yoki](https://x.com/Yokiiio22)
 - [agentidlive.ai](https://agentidlive.ai)
 
-## License
+## 许可
 
 MIT

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3 (2026-10-26)
+
+- The README is now in Chinese first (`README.md`), with the English one in `README_en.md`. 说明改成中文为主，英文版在 `README_en.md`。
+
 ## 0.1.2 (2026-10-25)
 
 - The npm page now shows the English README. The Chinese one is `README_zh.md`.
