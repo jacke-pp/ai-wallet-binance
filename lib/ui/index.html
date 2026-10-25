@@ -52,7 +52,7 @@
         <img id="cIcon" alt="" width="40" height="40" hidden><span class="letter" id="cLetter" aria-hidden="true"></span>
         <div class="coin-name">
           <h1><span id="cSym"></span> <small id="cName"></small></h1>
-          <div class="coin-meta"><span class="badge" id="cBadge"></span><button class="ca" id="cCa" type="button"></button><a id="cScan" target="_blank" rel="noopener noreferrer">bscscan</a></div>
+          <div class="coin-meta"><span class="badge" id="cBadge"></span><button class="ca" id="cCa" type="button"></button><a id="cScan" target="_blank" rel="noopener noreferrer">bscscan</a><a id="cGmgn" target="_blank" rel="noopener noreferrer" data-i18n="gmgn"></a></div>
         </div>
         <div class="coin-price"><b id="cPrice"></b><span id="cChange"></span></div>
       </div>
@@ -67,6 +67,7 @@
   </section>
 
   <aside class="trade pane" id="pane-trade">
+    <div class="claim" id="claimBox" hidden><p class="hint" data-i18n="claimHint"></p><button class="go buy" id="claimGo" type="button" data-i18n="claimBtn"></button></div>
     <div class="seg" id="side">
       <button data-side="buy" class="on" data-i18n="buy"></button>
       <button data-side="sell" data-i18n="sell"></button>

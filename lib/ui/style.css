@@ -105,6 +105,8 @@ h1, h2 { margin: 0; font-weight: 600; }
 
 /* trade panel */
 .trade { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.claim { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.claim .hint { margin: 0; color: var(--text); }
 .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--panel); border-radius: var(--r); padding: 3px; }
 .seg button { border: 0; background: none; padding: 8px; border-radius: 4px; color: var(--muted); font-weight: 600; }
 .seg button.on[data-side=buy] { background: var(--up); color: #fff; }
