@@ -11,6 +11,7 @@ Reply to the user in their language. Keep it short: what you did, the result, th
 ```bash
 npm install -g @binance/agentic-wallet     # Binance's official wallet CLI (baw)
 npm install -g ai-wallet-binance            # this tool (aiwb)
+aiwb agents                                 # these instructions, from wherever npm installed them
 aiwb doctor                                 # what is missing
 aiwb login                                  # prints a link + pairing code: send both to the user, they confirm in the Binance App
 ```
@@ -22,7 +23,9 @@ Binance App (they do it, not you):
   7 days; turn it on again then. Also turn on "trade all tokens".
 - **Sign-in** lasts at most 7 days and ends after 48 hours unused: run `aiwb login` again when `doctor` says so.
 - **Abnormal transaction handling**: App → AI wallet settings. Ask the user to set it to confirm in the App (not
-  auto-reject). Binance flags some trades as risky (sales on the GANG launchpad's curve, for example): with
+  auto-reject). Binance flags trades touching a coin its audit rates 3/5 or higher as risky (`aiwb check` says so;
+  every GANG curve coin so far, as their contracts are unverified). Moving the coin out does not avoid this: curve
+  coins cannot be transferred before they graduate, and a transfer of a flagged coin is screened the same way. With
   auto-reject they fail with "blocked as too risky"; with App confirmation `aiwb` prints "confirm it in the Binance
   App", waits (up to 10 minutes, `aiwb config set appWaitSec 600`) and finishes once the user taps confirm. When you
   see that message, tell the user to open the App and confirm. If it times out, check `aiwb journal` or bscscan
@@ -115,8 +118,8 @@ gets the proof, send it with `aiwb call`.
     take 3 transactions to buy (swap, approve, buy) and up to 3 to sell.
   - **GANG launchpad** (the one GANG launched on): each coin is priced in a quote coin (GANG, BNB, USDT, BNCB, ...).
     A buy is 3 transactions (get the quote coin, approve, buy); 1% fee each way; one wallet may hold at most 1%.
-    Binance flags sales on this curve as risky: they need abnormal transaction handling set to confirm in the App,
-    and the user taps confirm for each sale (tested 2026-10-25). On auto-reject the user holds until the curve fills;
+    Binance's audit rates these coins 3/5 (contract not verified), so each sale needs abnormal transaction handling
+    set to confirm in the App and a tap from the user (tested 2026-10-25; a 0/5 Four coin sold without one). On auto-reject the user holds until the curve fills;
     after that the coin trades on PancakeSwap V2 against its quote coin and `aiwb` sells it through that pool.
   - Coins that are their own agent-only curve.
 - **Graduated coins** on Flap's normal curve and on PancakeSwap V2.

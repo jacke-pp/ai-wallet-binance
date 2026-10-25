@@ -34,16 +34,18 @@ npm install -g ai-wallet-binance
 aiwb doctor
 ```
 
-Then open your AI in that folder and say: "read AGENTS.md and set me up". It will run `aiwb login`, send you a
+Then tell your AI: "run `aiwb agents`, read what it prints, and set me up". It will run `aiwb login`, send you a
 link to confirm in the Binance App, and tell you which App settings to turn on (Agent ID, developer mode).
+(`aiwb agents --path` shows where the instructions file is.)
 
 Or skip the AI and run `aiwb ui`: your browser opens the trading page and shows a QR code; scan it with the Binance
 App to sign in. The page only runs on your computer (127.0.0.1) and only answers the link it printed. Binance keeps
 the keys and signs every trade.
 
 In the Binance App, AI wallet settings, set **abnormal transaction handling** to confirm in the App. Binance flags
-some trades as risky (sales on the GANG launchpad's curve, for example); with auto-reject they fail, with
-App confirmation they wait for your tap on the phone and then go through.
+trades in coins its audit rates as risky (every coin on the GANG launchpad's curve so far, whose contracts are
+unverified); with auto-reject they fail, with App confirmation they wait for your tap on the phone and then go
+through. `aiwb check` and the trading page tell you before you buy when a coin will need that tap.
 
 ## Talk to it
 

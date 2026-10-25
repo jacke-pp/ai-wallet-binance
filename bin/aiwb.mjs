@@ -42,6 +42,7 @@ function setup() {
 
 const HELP = `aiwb - trade with your own Binance AI wallet (Agentic Wallet) on BNB Chain
 
+  aiwb agents [--path]                instructions for your AI (read these first)
   aiwb doctor                         check that everything is ready (baw, sign-in, Agent ID, limits)
   aiwb login                          sign the AI wallet in (scan the QR code in the Binance App)
   aiwb ui [--port 8686] [--no-open]   trading page in your browser: new coins, chart, one-click buy/sell, snipes
@@ -77,6 +78,14 @@ const settingsLine = cfg => `slippage ${cfg.slippagePct}%, gas limit ${cfg.gasLi
 async function main() {
   const [cmd, ...rest] = pos;
   if (!cmd || cmd === 'help' || flags.help) return console.log(HELP);
+
+  // The instructions for AI assistants, wherever npm put the package. `--path` prints only where the file is.
+  if (cmd === 'agents') {
+    const { fileURLToPath } = await import('node:url');
+    const { readFileSync } = await import('node:fs');
+    const file = fileURLToPath(new URL('../AGENTS.md', import.meta.url));
+    return console.log(flags.path ? file : readFileSync(file, 'utf8'));
+  }
 
   if (cmd === 'config') {
     if (rest[0] === 'set') { setConfig(rest[1], rest[2]); return show(loadConfig(), `saved ${rest[1]}`); }
