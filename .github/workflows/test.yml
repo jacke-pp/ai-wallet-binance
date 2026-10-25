@@ -1,0 +1,30 @@
+name: test
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [22]
+        include:
+          - os: ubuntu-latest
+            node: 18
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm test
+      # Installs Binance's wallet CLI and checks that aiwb finds and runs it (not signed in here, so doctor says so).
+      - run: npm install -g @binance/agentic-wallet
+      - run: npm link
+      - name: aiwb doctor finds baw
+        shell: bash
+        run: |
+          out=$(aiwb doctor 2>&1 || true)
+          echo "$out"
+          echo "$out" | grep -qi "baw CLI: .*baw"
+          echo "$out" | grep -qi "sign-in:"
+          ! echo "$out" | grep -qiE "not found|ENOENT|EINVAL|spawn"
