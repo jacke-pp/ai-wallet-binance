@@ -47,10 +47,15 @@ test('launchpad watchers are registered and parse creation logs', async () => {
   assert.equal(flap.predictedToken, '0x' + '4'.repeat(40));
 });
 
-test('Flap round trip is simulated only for BNB markets', () => {
+test('Flap round trip: BNB markets in 2 calls, quote-priced markets wrapped in swaps', async () => {
   const info = { market: '0x' + '3'.repeat(40), quote: ZERO };
-  assert.equal(roundTripCalls({}, info, 1n).length, 2);
-  assert.equal(roundTripCalls({}, { ...info, quote: '0x' + '5'.repeat(40) }, 1n), null);
+  assert.equal((await roundTripCalls({}, info, 1n)).length, 2);
+  assert.equal(await roundTripCalls({}, { ...info, notTradable: true }, 1n), null);
+  // The swap to the quote coin fails in the simulation: only the buy is returned, so the check reports the failed buy.
+  const rpc = { blockNumber: async () => 1n, send: async (m, [p]) => [{ calls: p.blockStateCalls[0].calls.map(() => ({ status: '0x0', logs: [] })) }] };
+  const rt = await roundTripCalls({ rpc, me: '0x' + '6'.repeat(40) }, { ...info, quote: '0x' + '5'.repeat(40) }, 1n);
+  assert.equal(rt.buys, 3);
+  assert.equal(rt.calls.length, 3);
 });
 
 import { nftsTo } from '../lib/mint.mjs';

@@ -118,8 +118,10 @@ gets the proof, send it with `aiwb call`.
 Speed, measured on mainnet (2026-10-25): a buy takes about 4.5–6 seconds from command to confirmed block: about 2–2.5
 s finding the market and pricing (faster with your own RPC node), about 2 s for Binance's check, signing and sending,
 and under 1 s until the block. A sell that first needs an approval is two transactions
-(about 8–12 seconds). Selling on the Four and Flap agent curves worked from an AI wallet in these tests, but Binance
-can change what its risk screen allows, so the warning above still applies.
+(about 8–12 seconds); a Flap agent market priced in BNCB takes about 13–16 seconds each way (3 transactions).
+Selling on the Four and Flap agent curves (BNB and BNCB markets) and on Flap's normal curve worked from an AI wallet in
+these tests; on the GANG launchpad's curve Binance blocked it. Binance can change what its risk screen allows, so the
+warning above still applies.
 
 ## Files
 
