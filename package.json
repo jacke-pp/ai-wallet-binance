@@ -1,14 +1,39 @@
 {
   "name": "ai-wallet-binance",
-  "version": "0.1.0",
-  "description": "Let any AI trade with your own Binance AI wallet (Agentic Wallet): instant buys and sells, snipes on agent-only launchpads (Four, Flap), AI-only mints. Binance signs everything; no private keys.",
+  "version": "0.1.1",
+  "description": "Let any AI trade with your own Binance AI wallet (Agentic Wallet): instant buys and sells, snipes on agent-only launchpads (Four, Flap, GANG), AI-only mints, and a local trading page. Binance signs everything; no private keys.",
   "type": "module",
-  "bin": { "aiwb": "bin/aiwb.mjs" },
-  "files": ["bin", "lib", "AGENTS.md", "README.md", "README.zh.md", "LICENSE"],
-  "engines": { "node": ">=18" },
-  "scripts": { "test": "node --test test/*.test.mjs" },
-  "keywords": ["binance", "agentic-wallet", "agent-id", "bsc", "four.meme", "flap", "sniper", "ai-agent"],
+  "bin": {
+    "aiwb": "bin/aiwb.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "AGENTS.md",
+    "README.md",
+    "README.zh.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "keywords": [
+    "binance",
+    "agentic-wallet",
+    "agent-id",
+    "bsc",
+    "four.meme",
+    "flap",
+    "sniper",
+    "ai-agent"
+  ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/jacke-pp/ai-wallet-binance.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacke-pp/ai-wallet-binance.git"
+  },
   "homepage": "https://github.com/jacke-pp/ai-wallet-binance"
 }

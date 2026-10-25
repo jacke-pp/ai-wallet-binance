@@ -143,3 +143,25 @@ test('speed-up: a stuck buy is re-sent and the faster copy counts; a buy that ju
   const r2 = await eng.buy(f.token, '0.01');
   assert.equal(r2.hash, '0xhash');
 });
+
+test('a transaction Binance sends to its App is waited for and matched by its call', async () => {
+  const { createWallet } = await import('../lib/wallet.mjs');
+  let history = ['0xold'], executed = false;
+  const run = async args => {
+    const cmd = args.slice(0, 2).join(' ');
+    if (cmd === 'wallet address') return { success: true, data: [{ binanceChainId: '56', address: '0x' + '1'.repeat(40) }] };
+    if (cmd === 'contract-call preview') return { success: true, data: { requestId: 'r1', simulationResult: { simulationCode: '000000000' }, requireConfirmation: true } };
+    if (cmd === 'contract-call execute') { executed = true; setTimeout(() => { history = ['0xother', '0xmine', '0xold']; }, 5); return { success: true, data: { status: 'PENDING_CONFIRMATION', txHash: null } }; }
+    if (cmd === 'wallet tx-history') return { success: true, data: { transactions: history.map(txHash => ({ txHash })) } };
+    throw new Error('unexpected ' + cmd);
+  };
+  const w = createWallet({ run });
+  let waited = null;
+  const tx = { to: '0x' + '2'.repeat(40), value: 0n, data: '0xabcd' };
+  await assert.rejects(w.send(tx, 'sell'), e => e.code === 'NEEDS_APP');
+  assert.equal(executed, false);
+  const r = await w.send(tx, 'sell', { onWait: l => { waited = l; }, pollMs: 10, timeoutMs: 2000, match: async h => h === '0xmine' });
+  assert.equal(waited, 'sell');
+  assert.equal(r.hash, '0xmine');
+  assert.equal(r.appConfirmed, true);
+});

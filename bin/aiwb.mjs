@@ -35,13 +35,16 @@ function setup() {
     wallet.address = async () => flags.as;
     wallet.send = async () => { throw new Error('--as is look-only: nothing is sent. Remove --as to trade.'); };
   }
-  return { cfg, rpc, wallet, engine: createEngine({ rpc, wallet, cfg }) };
+  // Binance may send a risky transaction to its App for confirmation: tell the user and wait.
+  const onAppWait = label => process.stderr.write(`Binance wants this ${label} confirmed in the Binance App. Open the App and confirm it (waiting up to ${Math.round((cfg.appWaitSec ?? 600) / 60)} minutes)...\n`);
+  return { cfg, rpc, wallet, engine: createEngine({ rpc, wallet, cfg, onAppWait }) };
 }
 
 const HELP = `aiwb - trade with your own Binance AI wallet (Agentic Wallet) on BNB Chain
 
   aiwb doctor                         check that everything is ready (baw, sign-in, Agent ID, limits)
   aiwb login                          sign the AI wallet in (scan the QR code in the Binance App)
+  aiwb ui [--port 8686] [--no-open]   trading page in your browser: new coins, chart, one-click buy/sell, snipes
   aiwb check <CA>                     safety check: Binance audit + simulated buy & sell back
   aiwb info <CA>                      where it trades, taxes, whether only AI wallets can buy, what you hold
   aiwb buy <CA> <BNB>                 buy now   [--slippage 15] [--max-tax 10] [--max-sell-tax 10] [--dry]
@@ -91,6 +94,18 @@ async function main() {
   }
 
   const { cfg, rpc, wallet, engine } = setup();
+
+  if (cmd === 'ui') {
+    const { startUi } = await import('../lib/ui/server.mjs');
+    const ui = await startUi({ cfg, rpc, wallet, createEngine, port: num('port', 0) });
+    console.log(`aiwb trading page (only on this computer):\n${ui.link}\nKeep this window open while you use it. Ctrl+C stops it.`);
+    if (!flags['no-open']) {
+      const { spawn } = await import('node:child_process');
+      const [bin, args] = process.platform === 'darwin' ? ['open', [ui.link]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', ui.link]] : ['xdg-open', [ui.link]];
+      spawn(bin, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref();
+    }
+    return new Promise(() => {});
+  }
 
   if (cmd === 'login') {
     // baw auth signin --json -> { qrCodeId, expireAt, urlForWeb, pairingCode } or { status: 'ALREADY_CONNECTED' }

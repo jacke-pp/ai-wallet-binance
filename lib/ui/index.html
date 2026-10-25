@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>aiwb · trade with your Binance AI wallet</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true"></span><b>aiwb</b></div>
+  <form class="search" id="search" autocomplete="off">
+    <input id="ca" spellcheck="false" data-i18n-ph="searchPh" aria-label="Contract address">
+  </form>
+  <div class="top-right">
+    <button class="ghost" id="lang" type="button">中</button>
+    <div class="wallet" id="wallet"></div>
+  </div>
+</header>
+
+<div class="notes" id="notes" hidden></div>
+
+<main class="app" id="app" hidden>
+  <nav class="mtabs" id="mtabs">
+    <button data-pane="feed" data-i18n="newShort"></button>
+    <button data-pane="coin" class="on" data-i18n="coin"></button>
+    <button data-pane="trade" data-i18n="trade"></button>
+  </nav>
+
+  <section class="feed pane" id="pane-feed">
+    <div class="feed-head">
+      <h2 data-i18n="newCoins"></h2>
+      <label class="quick"><span data-i18n="quickBuy"></span><input id="quickAmt" inputmode="decimal" placeholder="0.01"><span>BNB</span></label>
+    </div>
+    <div class="feed-filter" id="feedFilter">
+      <button data-p="all" class="on" data-i18n="all"></button>
+      <button data-p="four-agent">Four</button>
+      <button data-p="flap-agent">Flap</button>
+      <button data-p="gang">GANG</button>
+    </div>
+    <ol class="feed-list" id="feed"></ol>
+  </section>
+
+  <section class="coin pane on" id="pane-coin">
+    <div class="empty" id="coinEmpty">
+      <h1 data-i18n="emptyTitle"></h1>
+      <p data-i18n="emptyBody"></p>
+    </div>
+    <div id="coinView" hidden>
+      <div class="coin-head">
+        <img id="cIcon" alt="" width="40" height="40" hidden><span class="letter" id="cLetter" aria-hidden="true"></span>
+        <div class="coin-name">
+          <h1><span id="cSym"></span> <small id="cName"></small></h1>
+          <div class="coin-meta"><span class="badge" id="cBadge"></span><button class="ca" id="cCa" type="button"></button><a id="cScan" target="_blank" rel="noopener noreferrer">bscscan</a></div>
+        </div>
+        <div class="coin-price"><b id="cPrice"></b><span id="cChange"></span></div>
+      </div>
+      <dl class="stats" id="stats"></dl>
+      <div class="chart-box">
+        <div class="chart-bar"><div class="chart-tools" id="intervals"></div><div class="chart-tip" id="chartTip"></div></div>
+        <canvas id="chart"></canvas>
+        <p class="chart-empty" id="chartEmpty" hidden data-i18n="noChart"></p>
+      </div>
+      <div class="check" id="check"></div>
+    </div>
+  </section>
+
+  <aside class="trade pane" id="pane-trade">
+    <div class="seg" id="side">
+      <button data-side="buy" class="on" data-i18n="buy"></button>
+      <button data-side="sell" data-i18n="sell"></button>
+    </div>
+    <div id="buyBox">
+      <div class="presets" id="presets"></div>
+      <label class="field"><span data-i18n="amount"></span><input id="amt" inputmode="decimal" placeholder="0.00"><em>BNB</em></label>
+      <p class="hint" id="bal"></p>
+    </div>
+    <div id="sellBox" hidden>
+      <div class="presets" id="sellPresets"></div>
+      <p class="hint" id="held"></p>
+    </div>
+    <label class="field small"><span data-i18n="slippage"></span><input id="slip" inputmode="decimal"><em>%</em></label>
+    <button class="go buy" id="go" type="button" disabled></button>
+    <p class="warn" id="agentWarn" hidden data-i18n="agentWarn"></p>
+    <div class="status" id="status" aria-live="polite"></div>
+  </aside>
+
+  <section class="bottom" id="bottom">
+    <div class="tabs" id="btabs">
+      <button data-tab="holdings" class="on" data-i18n="holdings"></button>
+      <button data-tab="trades" data-i18n="trades"></button>
+      <button data-tab="snipes" data-i18n="snipes"></button>
+    </div>
+    <div class="tab on" id="tab-holdings"></div>
+    <div class="tab" id="tab-trades"></div>
+    <div class="tab" id="tab-snipes">
+      <form class="snipe-form" id="snipeForm">
+        <select name="kind"><option value="watch" data-i18n="snipeWatch"></option><option value="token" data-i18n="snipeToken"></option></select>
+        <input name="ca" data-i18n-ph="snipeCa" hidden>
+        <select name="platform"><option value="all" data-i18n="allPads"></option><option value="four-agent">Four</option><option value="flap-agent">Flap</option><option value="gang">GANG</option></select>
+        <input name="bnb" inputmode="decimal" data-i18n-ph="snipeBnb" required>
+        <input name="count" inputmode="numeric" data-i18n-ph="snipeCount">
+        <input name="dailyCap" inputmode="decimal" data-i18n-ph="snipeCap" required>
+        <input name="maxTax" inputmode="decimal" data-i18n-ph="snipeTax" required>
+        <input name="name" data-i18n-ph="snipeName">
+        <button class="go buy" data-i18n="snipeAdd"></button>
+      </form>
+      <p class="hint" data-i18n="snipeHint"></p>
+      <div id="snipeList"></div>
+      <pre class="snipe-log" id="snipeLog"></pre>
+    </div>
+  </section>
+</main>
+
+<section class="login" id="login" hidden>
+  <div class="login-card">
+    <h1 data-i18n="loginTitle"></h1>
+    <p data-i18n="loginBody"></p>
+    <div class="qr" id="qr"></div>
+    <p class="pair" id="pair"></p>
+    <ol class="steps">
+      <li data-i18n="loginStep1"></li>
+      <li data-i18n="loginStep2"></li>
+      <li data-i18n="loginStep3"></li>
+    </ol>
+    <button class="go buy" id="loginBtn" type="button" data-i18n="loginBtn"></button>
+    <p class="hint" data-i18n="loginSafe"></p>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="/app.js"></script>
+</body>
+</html>

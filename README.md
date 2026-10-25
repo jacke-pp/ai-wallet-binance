@@ -21,6 +21,8 @@ and it runs on your own computer or server.
 - **Your settings**: slippage, gas limit, automatic speed-up of stuck transactions, spending limits, highest buy and
   sell tax. Taxes are measured by simulating a buy and sale from your own wallet, not just read from the contract.
 - **Keep a journal** of every trade with profit and loss, stored on your machine.
+- **Trade in your browser** if you'd rather click than chat: `aiwb ui` opens a trading page on your own computer
+  with new agent coins as they launch, a live chart, the safety check, one-click buy and sell, holdings and snipes.
 
 ## Start
 
@@ -35,6 +37,14 @@ aiwb doctor
 Then open your AI in that folder and say: "read AGENTS.md and set me up". It will run `aiwb login`, send you a
 link to confirm in the Binance App, and tell you which App settings to turn on (Agent ID, developer mode).
 
+Or skip the AI and run `aiwb ui`: your browser opens the trading page and shows a QR code; scan it with the Binance
+App to sign in. The page only runs on your computer (127.0.0.1) and only answers the link it printed. Binance keeps
+the keys and signs every trade.
+
+In the Binance App, AI wallet settings, set **abnormal transaction handling** to confirm in the App. Binance flags
+some trades as risky (sales on the GANG launchpad's curve, for example); with auto-reject they fail, with
+App confirmation they wait for your tap on the phone and then go through.
+
 ## Talk to it
 
 | You say | It runs |
@@ -44,6 +54,7 @@ link to confirm in the Binance App, and tell you which App settings to turn on (
 | "Sell half" | `aiwb sell 0x... 50%` |
 | "Snipe new Four agent coins, 0.02 each, at most 3" | asks you for the daily cap and tax limit, then `aiwb snipe add watch ...` |
 | "How am I doing?" | `aiwb pnl` |
+| "Open the trading page" | `aiwb ui` |
 
 ## Before you use it
 

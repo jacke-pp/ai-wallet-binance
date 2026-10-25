@@ -21,7 +21,13 @@ Binance App (they do it, not you):
 - **Developer mode** (needed for direct contract calls): App → AI wallet settings → Developer Mode. It expires after
   7 days; turn it on again then. Also turn on "trade all tokens".
 - **Sign-in** lasts at most 7 days and ends after 48 hours unused: run `aiwb login` again when `doctor` says so.
-- Daily limit and auto-reject of risky transactions are set in the App. You cannot change them.
+- **Abnormal transaction handling**: App → AI wallet settings. Ask the user to set it to confirm in the App (not
+  auto-reject). Binance flags some trades as risky (sales on the GANG launchpad's curve, for example): with
+  auto-reject they fail with "blocked as too risky"; with App confirmation `aiwb` prints "confirm it in the Binance
+  App", waits (up to 10 minutes, `aiwb config set appWaitSec 600`) and finishes once the user taps confirm. When you
+  see that message, tell the user to open the App and confirm. If it times out, check `aiwb journal` or bscscan
+  before trying again: a late confirmation still goes through.
+- The daily limit is set in the App. You cannot change it or these settings.
 
 Works the same on the user's computer or their own server. On a server, run snipes inside `tmux`/`screen` or as a
 service so they keep running.
@@ -40,6 +46,7 @@ service so they keep running.
 | "Mint this NFT" / "mint when the presale opens" | `aiwb mint <contract> <qty> --max-price <BNB each>` (add `--wait 600` to keep trying until it opens) |
 | "What are gas prices?" / "use more gas" | `aiwb gas`, then `aiwb config set ...` (see Settings) |
 | "How am I doing?" | `aiwb pnl`, `aiwb journal` |
+| "I want to click, not type" / "open the trading page" | `aiwb ui` (keep it running; give the user the printed link) |
 
 Add `--dry` to see what would happen without sending anything. Add `--json` for machine-readable output.
 
@@ -108,9 +115,9 @@ gets the proof, send it with `aiwb call`.
     take 3 transactions to buy (swap, approve, buy) and up to 3 to sell.
   - **GANG launchpad** (the one GANG launched on): each coin is priced in a quote coin (GANG, BNB, USDT, BNCB, ...).
     A buy is 3 transactions (get the quote coin, approve, buy); 1% fee each way; one wallet may hold at most 1%.
-    In our tests (2026-10-25) Binance let the AI wallet buy there but **blocked every sale on the curve**: tell the
-    user they will most likely hold until the curve fills. After that the coin trades on PancakeSwap V2 against its
-    quote coin and `aiwb` sells it through that pool.
+    Binance flags sales on this curve as risky: they need abnormal transaction handling set to confirm in the App,
+    and the user taps confirm for each sale (tested 2026-10-25). On auto-reject the user holds until the curve fills;
+    after that the coin trades on PancakeSwap V2 against its quote coin and `aiwb` sells it through that pool.
   - Coins that are their own agent-only curve.
 - **Graduated coins** on Flap's normal curve and on PancakeSwap V2.
 - **Any contract call** through the AI wallet (mints, claims), simulated by Binance before it is sent.
@@ -120,8 +127,18 @@ s finding the market and pricing (faster with your own RPC node), about 2 s for 
 and under 1 s until the block. A sell that first needs an approval is two transactions
 (about 8–12 seconds); a Flap agent market priced in BNCB takes about 13–16 seconds each way (3 transactions).
 Selling on the Four and Flap agent curves (BNB and BNCB markets) and on Flap's normal curve worked from an AI wallet in
-these tests; on the GANG launchpad's curve Binance blocked it. Binance can change what its risk screen allows, so the
-warning above still applies.
+these tests; on the GANG launchpad's curve it needed a confirmation in the App. Binance can change what its risk
+screen allows, so the warning above still applies.
+
+## Trading page (`aiwb ui`)
+
+For users who would rather click: `aiwb ui` serves a page on 127.0.0.1 and opens the browser (`--no-open` just prints
+the link, `--port 8686` fixes the port). It shows new agent coins as they launch, a chart, the safety check, buy and
+sell buttons, holdings, the journal and snipes, in English or Chinese. Sign-in is the same QR code, scanned in the
+Binance App. The same rules apply on the page: snipe numbers have no defaults and agent-only coins carry the sell
+warning. Snipes added on the page run while `aiwb ui` runs; only one aiwb may run snipes at a time, so stop
+`aiwb snipe run` first. The link carries a random key made at start: anyone without it gets nothing, and the page
+never sees a private key.
 
 ## Files
 
