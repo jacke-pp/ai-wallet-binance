@@ -1,6 +1,6 @@
 {
   "name": "ai-wallet-binance",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Let any AI trade with your own Binance AI wallet (Agentic Wallet): instant buys and sells, snipes on agent-only launchpads (Four, Flap, GANG), AI-only mints, and a local trading page. Binance signs everything; no private keys.",
   "type": "module",
   "bin": {
@@ -11,7 +11,7 @@
     "lib",
     "AGENTS.md",
     "README.md",
-    "README.zh.md",
+    "README_zh.md",
     "LICENSE"
   ],
   "engines": {

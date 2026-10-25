@@ -7,7 +7,7 @@ Tell Claude, Codex, DeepSeek or Grok "buy 0.05 BNB of this coin" and it does it 
 with an Agent ID can buy. Binance keeps the key and signs every transaction. This tool never sees a private key,
 and it runs on your own computer or server.
 
-[中文说明](README.zh.md)
+[中文说明](https://github.com/jacke-pp/ai-wallet-binance/blob/main/README_zh.md)
 
 ## What it does
 

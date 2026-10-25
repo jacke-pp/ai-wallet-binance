@@ -5,7 +5,7 @@
 跟 Claude、Codex、DeepSeek 或 Grok 说一句“这个币买 0.05 BNB”，它就用你的币安 Agentic Wallet 去买，包括只有带
 Agent ID 的 AI 钱包才能买的新币。私钥在币安手里，每笔交易都由币安签名；本工具碰不到私钥，在你自己的电脑或服务器上运行。
 
-[English](README.md)
+[English](https://github.com/jacke-pp/ai-wallet-binance/blob/main/README.md)
 
 ## 能做什么
 
