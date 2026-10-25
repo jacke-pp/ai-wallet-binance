@@ -1,5 +1,19 @@
 # Changelog
 
+## 未发布 / Unreleased
+
+- **交易页面改成“战壕”**：`aiwb ui` 首页三列：新创建、即将打满（内盘 30% 以上）、已开盘，平台仍是 Four Agent、Flap Agent、
+  GANG。每张卡片：图标、名字、多久前、买卖税、计价币、平台和“Agent 专属”、内盘进度（已筹 / 目标）、市值、持有人、Dev 地址，
+  还有 P1/P2/P3 快买（金额只用你自己填的，没填就不显示）。每列可以按名字筛选、按平台筛选；数字原地更新，不闪。点卡片进入原来的币详情。
+  数据直接读链（Four 的 vault 已筹、Flap 的 marketDetail、GANG 的 curves），批量请求、出错自动放慢；持有人、市值、图标来自币安公开数据。
+- **Trading page trenches**: the home of `aiwb ui` is now three columns: new, nearly full (curve 30%+) and launched, still
+  for Four Agent, Flap Agent and GANG. Each card shows the logo, name, age, buy/sell tax, quote coin, platform and an
+  "Agent only" tag, curve progress (raised / target), market cap, holders, the dev address and P1/P2/P3 quick buys
+  (only amounts you typed; empty ones are hidden). Each column filters by name and platform; numbers update in place.
+  A card opens the coin page as before. Data is read from the chain (Four's raised BNB from the coin's vault, Flap's
+  marketDetail, GANG's curves), batched and slowed down on errors; holders, market cap and logos come from Binance's
+  public token data.
+
 ## 0.1.3 (2026-10-26)
 
 - The README is now in Chinese first (`README.md`), with the English one in `README_en.md`. 说明改成中文为主，英文版在 `README_en.md`。

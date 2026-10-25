@@ -10,6 +10,10 @@
 <body>
 <header class="top">
   <div class="brand"><span class="logo" aria-hidden="true"></span><b>aiwb</b></div>
+  <nav class="views" id="views">
+    <button type="button" data-view="trenches" class="on" data-i18n="trenches"></button>
+    <button type="button" data-view="coin" data-i18n="trade"></button>
+  </nav>
   <form class="search" id="search" autocomplete="off">
     <input id="ca" spellcheck="false" data-i18n-ph="searchPh" aria-label="Contract address">
   </form>
@@ -21,26 +25,30 @@
 
 <div class="notes" id="notes" hidden></div>
 
+<section class="trenches" id="trenches" hidden>
+  <div class="tr-bar">
+    <div class="quick3" id="quick3">
+      <span class="qlabel" data-i18n="quickBuy"></span>
+      <label><b>P1</b><input inputmode="decimal" aria-label="P1"></label>
+      <label><b>P2</b><input inputmode="decimal" aria-label="P2"></label>
+      <label><b>P3</b><input inputmode="decimal" aria-label="P3"></label>
+      <span class="unit">BNB</span>
+    </div>
+    <p class="tr-note" data-i18n="feedNote"></p>
+  </div>
+  <nav class="ttabs" id="ttabs">
+    <button type="button" data-col="new" class="on" data-i18n="colNew"></button>
+    <button type="button" data-col="soon" data-i18n="colSoon"></button>
+    <button type="button" data-col="launched" data-i18n="colLaunched"></button>
+  </nav>
+  <div class="cols" id="cols"></div>
+</section>
+
 <main class="app" id="app" hidden>
   <nav class="mtabs" id="mtabs">
-    <button data-pane="feed" data-i18n="newShort"></button>
     <button data-pane="coin" class="on" data-i18n="coin"></button>
     <button data-pane="trade" data-i18n="trade"></button>
   </nav>
-
-  <section class="feed pane" id="pane-feed">
-    <div class="feed-head">
-      <h2 data-i18n="newCoins"></h2>
-      <label class="quick"><span data-i18n="quickBuy"></span><input id="quickAmt" inputmode="decimal" placeholder="0.01"><span>BNB</span></label>
-    </div>
-    <div class="feed-filter" id="feedFilter">
-      <button data-p="all" class="on" data-i18n="all"></button>
-      <button data-p="four-agent">Four</button>
-      <button data-p="flap-agent">Flap</button>
-      <button data-p="gang">GANG</button>
-    </div>
-    <ol class="feed-list" id="feed"></ol>
-  </section>
 
   <section class="coin pane on" id="pane-coin">
     <div class="empty" id="coinEmpty">

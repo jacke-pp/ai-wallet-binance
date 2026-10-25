@@ -44,6 +44,10 @@ test('local page: key, host and origin are enforced', async () => {
     const ok = await req(port, '/api/state', { headers: { host, 'x-aiwb-key': key } });
     assert.equal(ok.status, 200);
     assert.equal(JSON.parse(ok.body).signedIn, true);
+    assert.equal((await req(port, '/api/trenches', { headers: { host } })).status, 401, 'board needs the key too');
+    const board = await req(port, '/api/trenches', { headers: { host, 'x-aiwb-key': key } });
+    assert.equal(board.status, 200);
+    assert.ok(Array.isArray(JSON.parse(board.body).items));
 
     // A form post from another page can't send JSON with our header; plain text bodies are refused outright.
     const form = await req(port, '/api/buy', { method: 'POST', headers: { host, 'x-aiwb-key': key, 'content-type': 'text/plain' }, body: '{"ca":"0x' + '2'.repeat(40) + '","bnb":1}' });

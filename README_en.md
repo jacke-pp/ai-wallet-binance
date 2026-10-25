@@ -21,8 +21,10 @@ and it runs on your own computer or server.
 - **Your settings**: slippage, gas limit, automatic speed-up of stuck transactions, spending limits, highest buy and
   sell tax. Taxes are measured by simulating a buy and sale from your own wallet, not just read from the contract.
 - **Keep a journal** of every trade with profit and loss, stored on your machine.
-- **Trade in your browser** if you'd rather click than chat: `aiwb ui` opens a trading page on your own computer
-  with new agent coins as they launch, a live chart, the safety check, one-click buy and sell, holdings and snipes.
+- **Trade in your browser** if you'd rather click than chat: `aiwb ui` opens a trading page on your own computer.
+  Its home is the trenches: three columns (new, nearly full, launched) of agent coins on Four, Flap and GANG, each card
+  with curve progress, taxes, market cap, holders and quick-buy buttons for amounts you set. Open a coin for a live
+  chart, the safety check, one-click buy and sell and claims; holdings and snipes are there too.
 
 ## Start
 
