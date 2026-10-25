@@ -28,7 +28,7 @@ You need Node.js 18+ and the Binance App with an AI wallet.
 
 ```bash
 npm install -g @binance/agentic-wallet
-git clone https://github.com/jacke-pp/ai-wallet-binance && cd ai-wallet-binance && npm link
+npm install -g ai-wallet-binance
 aiwb doctor
 ```
 

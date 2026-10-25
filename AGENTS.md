@@ -10,7 +10,7 @@ Reply to the user in their language. Keep it short: what you did, the result, th
 
 ```bash
 npm install -g @binance/agentic-wallet     # Binance's official wallet CLI (baw)
-git clone https://github.com/jacke-pp/ai-wallet-binance && cd ai-wallet-binance && npm link   # this tool
+npm install -g ai-wallet-binance            # this tool (aiwb)
 aiwb doctor                                 # what is missing
 aiwb login                                  # prints a link + pairing code: send both to the user, they confirm in the Binance App
 ```

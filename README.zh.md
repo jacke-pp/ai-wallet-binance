@@ -24,7 +24,7 @@ Agent ID 的 AI 钱包才能买的新币。私钥在币安手里，每笔交易�
 
 ```bash
 npm install -g @binance/agentic-wallet
-git clone https://github.com/jacke-pp/ai-wallet-binance && cd ai-wallet-binance && npm link
+npm install -g ai-wallet-binance
 aiwb doctor
 ```
 
