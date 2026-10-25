@@ -25,6 +25,12 @@ and it runs on your own computer or server.
   Its home is the trenches: three columns (new, nearly full, launched) of agent coins on Four, Flap and GANG, each card
   with curve progress, taxes, market cap, holders and quick-buy buttons for amounts you set. Open a coin for a live
   chart, the safety check, one-click buy and sell and claims; holdings and snipes are there too.
+- **Send coins out once they can move** (optional): set your address, then switch on Flap (claim after launch, then
+  send), Four (send after graduation) and GANG (send after graduation) separately. All off by default; only coins bought
+  after you switch one on are sent, each coin once, with retries. Or send by hand: `aiwb send <CA> <address>`.
+- **GMGN data, read only**: with your own GMGN API key the trading page's chart and the holder stats (top 10, creator,
+  new wallets, bots, liquidity, contract owner) come from GMGN, and your AI can query `aiwb gmgn`. Orders still go
+  through your Binance AI wallet: GMGN wallets have no Agent ID, so they cannot buy agent-only coins.
 
 ## Start
 
@@ -59,6 +65,9 @@ through. `aiwb check` and the trading page tell you before you buy when a coin w
 | "Snipe new Four agent coins, 0.02 each, at most 3" | asks you for the daily cap and tax limit, then `aiwb snipe add watch ...` |
 | "How am I doing?" | `aiwb pnl` |
 | "Open the trading page" | `aiwb ui` |
+| "Send all my 0x... to 0x..." | checks the coin, amount and address with you, then `aiwb send 0x... 0x...` |
+| "Send it to my address 0x... once it graduates" | `aiwb config set autoSendTo 0x...`, then switches on `autoSendFour` / `autoSendGang` / `autoSendFlap` |
+| "Show GMGN's top holders of 0x..." | `aiwb gmgn holders 0x...` |
 
 ## Before you use it
 
@@ -66,6 +75,8 @@ through. `aiwb check` and the trading page tell you before you buy when a coin w
   hold until it moves to PancakeSwap, and only buy what you can afford to hold.
 - Binance checks every transaction before signing and may refuse it. The daily limit and risk settings live in the
   App, not here.
+- Auto-send works while `aiwb ui` (or `aiwb autosend run`) is running. Coins sent away cannot come back: check the address twice.
+- Get a GMGN key at https://gmgn.ai/ai, then `aiwb config set gmgnKey <key>` or paste it into the trading page's "Auto-send & data" tab. It stays on your computer and only goes to GMGN.
 - Free public BSC nodes are used by default. For faster snipes set your own: `aiwb config set rpc <url>`.
 - This is a tool, not advice. New coins are risky and most go to zero.
 

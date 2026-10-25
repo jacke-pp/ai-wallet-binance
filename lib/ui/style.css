@@ -142,6 +142,8 @@ h1, h2 { margin: 0; font-weight: 600; }
 .chart-box { position: relative; background: var(--panel); border-radius: var(--r); padding: 8px; }
 .chart-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; min-width: 0; }
 .chart-tools { display: flex; gap: 2px; flex: none; }
+.chart-tools button, .tabs button, .mtabs button { background: none; border: 0; color: var(--muted); padding: 4px 8px; border-radius: 4px; }
+.chart-tools button.on { background: var(--raised); color: var(--text); }
 #chart { width: 100%; height: 340px; display: block; }
 .chart-tip { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; margin-left: auto; }
 .chart-empty { position: absolute; inset: 40px 0 0; display: grid; place-items: center; color: var(--muted); margin: 0; padding: 0 24px; text-align: center; }
@@ -263,3 +265,16 @@ td .ic { border-radius: 50%; vertical-align: -3px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* auto-send & GMGN settings */
+.auto-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 32px; align-items: start; max-width: 1100px; }
+.auto-form section { display: flex; flex-direction: column; gap: 10px; }
+.auto-form h3 { font-size: 15px; }
+.auto-form > .go { grid-column: 1 / -1; justify-self: start; padding: 8px 28px; font-size: 14px; }
+.afield { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.afield input { background: var(--panel); border: 1px solid var(--line2); border-radius: 4px; padding: 8px; color: var(--text); font-family: inherit; min-width: 0; }
+.acheck { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; cursor: pointer; }
+.acheck input { margin-top: 2px; accent-color: var(--yellow); }
+#autoList { margin-top: 16px; }
+.stats.gm { border-top: 1px dashed var(--line2); padding-top: 8px; }
+.chart-src { margin-left: auto; font-size: 11px; color: var(--muted); }

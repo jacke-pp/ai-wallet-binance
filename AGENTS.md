@@ -46,6 +46,9 @@ service so they keep running.
 | "Snipe this coin when it opens" | `aiwb snipe add token <CA> ...` (ask first, see below) |
 | "Snipe new agent coins" | `aiwb snipe add watch ...` (ask first, see below) |
 | "Claim my coins" (Flap agent coin launched) | `aiwb claim <market or CA>` |
+| "Send my <coin> to 0x..." | `aiwb send <CA> <address> [50%\|amount]` (rule 6: repeat it back first; `--dry` simulates) |
+| "Send my coins to 0x... automatically once they can move" | see Auto-send below |
+| "Show the GMGN chart / holders / security of <CA>" | `aiwb gmgn kline <CA> --res 5m`, `aiwb gmgn info <CA>`, `aiwb gmgn security <CA>`, `aiwb gmgn holders <CA>`, `aiwb gmgn trenches` (needs the user's GMGN key) |
 | "Mint this NFT" / "mint when the presale opens" | `aiwb mint <contract> <qty> --max-price <BNB each>` (add `--wait 600` to keep trying until it opens) |
 | "What are gas prices?" / "use more gas" | `aiwb gas`, then `aiwb config set ...` (see Settings) |
 | "How am I doing?" | `aiwb pnl`, `aiwb journal` |
@@ -105,7 +108,10 @@ gets the proof, send it with `aiwb call`.
    do not buy unless the user insists after hearing why.
 5. If Binance refuses a transaction (risk screen, needs App confirmation, daily limit), say so plainly. Do not retry
    in a loop or try to get around it.
-6. Never send BNB or tokens to another address with this tool, and never call contracts the user did not ask for.
+6. Send coins to another address (`aiwb send`, or the auto-send switches) only when the user asks and gives the
+   address themselves. Repeat the coin, the amount and the full address back and get a yes: coins sent away cannot
+   come back. Never send BNB to anyone, never pick an address yourself, and never call contracts the user did not ask
+   for.
 
 ## What `aiwb` supports
 
@@ -133,11 +139,44 @@ Selling on the Four and Flap agent curves (BNB and BNCB markets) and on Flap's n
 these tests; on the GANG launchpad's curve it needed a confirmation in the App. Binance can change what its risk
 screen allows, so the warning above still applies.
 
+## Auto-send (off by default)
+
+Once an agent coin the user bought can move, `aiwb` can send all of it to an address the user chose. Set up only when
+the user asks, with their address (rule 6):
+
+```bash
+aiwb config set autoSendTo 0x...        # the user's address
+aiwb config set autoSendFlap on         # Flap agent coin launched: claim the shares, then send the coin
+aiwb config set autoSendFour on         # Four agent coin graduated to PancakeSwap (coins unlock): send it
+aiwb config set autoSendGang on         # GANG coin graduated (locked() turns false): send it
+aiwb config set autoClaimFlap on        # only claim launched Flap coins into the AI wallet, no sending
+aiwb autosend                           # what is on, and what was sent
+```
+
+- Each switch remembers when it was turned on and only acts on coins bought (or claimed) through `aiwb` after that, so
+  older holdings are never swept out. Each coin is sent once; buying more of it later is the user's.
+- It runs inside `aiwb ui`, or in a terminal with `aiwb autosend run` (one of them at a time). It checks every 30 s.
+- A failed send is retried after 1, 5 and 15 minutes, then left to the user (`aiwb send`). With too little BNB for gas
+  it waits and says so. If Binance wants a tap in the App (coins its audit rates 3/5 or higher), it waits up to
+  `appWaitSec` for the user.
+- Before a coin graduates it cannot be moved at all (Four and GANG revert transfers while on the curve), so sending
+  early is not a way around the App confirmation.
+
+## GMGN data (read only)
+
+With the user's own GMGN API key (from https://gmgn.ai/ai, saved with `aiwb config set gmgnKey <key>`, never printed)
+`aiwb gmgn ...` returns GMGN's candles (USD, at most 100 per call), token info, security, top holders and the
+trenches lists, and the trading page draws its chart and extra coin stats from GMGN. Nothing trades through GMGN: its
+wallets have no Binance Agent ID, so trading stays on the AI wallet. Never ask the user to paste the key into the chat;
+they run the `config set` command themselves or paste it into the page.
+
 ## Trading page (`aiwb ui`)
 
 For users who would rather click: `aiwb ui` serves a page on 127.0.0.1 and opens the browser (`--no-open` just prints
-the link, `--port 8686` fixes the port). It shows new agent coins as they launch, a chart, the safety check, buy and
-sell buttons, holdings, the journal and snipes, in English or Chinese. Sign-in is the same QR code, scanned in the
+the link, `--port 8686` fixes the port). Its home is the trenches: three columns (new, nearly full, launched) of agent
+coins on Four, Flap and GANG with quick-buy buttons that use only amounts the user typed. A coin page has a chart, the
+safety check, buy, sell and claim; below are holdings, the journal, snipes and an "Auto-send & data" tab for the
+auto-send switches and the GMGN key. English or Chinese. Sign-in is the same QR code, scanned in the
 Binance App. The same rules apply on the page: snipe numbers have no defaults and agent-only coins carry the sell
 warning. Snipes added on the page run while `aiwb ui` runs; only one aiwb may run snipes at a time, so stop
 `aiwb snipe run` first. The link carries a random key made at start: anyone without it gets nothing, and the page
@@ -146,6 +185,6 @@ never sees a private key.
 ## Files
 
 Everything stays on the user's machine in `~/.ai-wallet-binance/`: `config.json` (RPC node, slippage, optional limits),
-`journal.jsonl` (every trade), `snipes.json`. Optional limits: `aiwb config set maxPerTradeBnb 0.1`,
+`journal.jsonl` (every trade), `snipes.json`, `autosend.json` (what auto-send did). Optional limits: `aiwb config set maxPerTradeBnb 0.1`,
 `aiwb config set dailyCapBnb 1`. Free public BSC nodes are used unless the user sets their own:
 `aiwb config set rpc <url>` (a private node makes snipes faster and more reliable).

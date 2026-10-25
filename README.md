@@ -20,6 +20,12 @@ Agent ID 的 AI 钱包才能买的新币。私钥在币安手里，每笔交易�
 - **在浏览器里点着交易**：不想打字就运行 `aiwb ui`，在你自己电脑上打开一个交易页面。首页是“战壕”三列：新创建、
   即将打满、已开盘（Four、Flap、GANG 三个平台的 Agent 币），每张卡片有内盘进度、税、市值、持有人数和快买按钮（金额自己填）。
   点进一个币有实时 K 线、买前检查、一键买卖、领取，还有持仓和狙击。
+- **领完或毕业后自动转出**：可选。设好你的地址，再分别打开 Flap（发币后自动领币再转出）、Four（毕业后转出）、GANG
+  （毕业后转出）的开关，币一能动就全部转到你的地址。默认全关；只转打开以后买到的币，每个币只转一次，失败会自动重试。
+  也可以手动转：`aiwb send <币> <地址>`。
+- **接 GMGN 数据（只读）**：填上你自己的 GMGN API key，交易页面的 K 线和持仓分布、前 10 持仓、创建者持仓、新钱包、
+  机器人、流动性、合约权限就从 GMGN 来；AI 也能用 `aiwb gmgn` 查。下单仍走币安 AI 钱包：GMGN 的钱包没有 Agent ID，
+  买不了 Agent 专属币。
 
 ## 开始
 
@@ -51,11 +57,16 @@ aiwb doctor
 | “狙 Four 的 Agent 新币，每个 0.02，最多 3 个” | 先问你每天上限和最高税，再 `aiwb snipe add watch ...` |
 | “我赚了多少？” | `aiwb pnl` |
 | “打开交易页面” | `aiwb ui` |
+| “把 0x... 全部转到 0x...” | 先跟你核对币、数量和地址，再 `aiwb send 0x... 0x...` |
+| “毕业后自动转到我的地址 0x...” | `aiwb config set autoSendTo 0x...`，再打开 `autoSendFour` / `autoSendGang` / `autoSendFlap` |
+| “看 0x... 的 GMGN 持仓” | `aiwb gmgn holders 0x...` |
 
 ## 用之前要知道
 
 - Agent 币还在只限 AI 钱包的内盘阶段时，币安可能不让 AI 钱包卖出。做好拿到它上 PancakeSwap 的准备，只买你拿得住的量。
 - 每笔交易币安都会先检查再签名，可能拒绝。每日限额和风控设置在 App 里，不在这里。
+- 自动转出只在 `aiwb ui` 开着（或运行 `aiwb autosend run`）时工作。转出去的币回不来，地址请核对两遍。
+- GMGN key 申请：https://gmgn.ai/ai ，然后 `aiwb config set gmgnKey <key>`，或在交易页面“自动转出与数据”里填。key 只存在你电脑上，只发给 GMGN。
 - 默认用免费的公共 BSC 节点。想狙得更快可以换成自己的：`aiwb config set rpc <地址>`。
 - 这是工具，不是投资建议。新币风险很高，大多数会归零。
 

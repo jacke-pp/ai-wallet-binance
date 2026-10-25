@@ -57,3 +57,29 @@ test('local page: key, host and origin are enforced', async () => {
     assert.equal((await req(port, '/../package.json', { headers: { host } })).status, 404, 'no files outside the page');
   } finally { ui.close(); }
 });
+
+test('settings: the GMGN key is saved but never sent back; send switches need an address', async () => {
+  const ui = await startUi({ cfg: { slippagePct: 15 }, rpc, wallet, createEngine: () => ({ ...engine, ctxFor: async () => ({ me: '0x' + '1'.repeat(40) }) }), log: () => {} });
+  try {
+    const port = ui.server.address().port, key = ui.link.split('#k=')[1];
+    const headers = { host: `127.0.0.1:${port}`, 'x-aiwb-key': key, 'content-type': 'application/json' };
+    const post = b => req(port, '/api/settings', { method: 'POST', headers, body: JSON.stringify(b) });
+    assert.equal((await req(port, '/api/settings', { headers: { host: headers.host } })).status, 401);
+    const off = JSON.parse((await req(port, '/api/settings', { headers })).body);
+    assert.equal(off.autoSendFour, null);
+    assert.equal(off.gmgnKey, false);
+    const refused = await post({ autoSendFour: true });
+    assert.equal(refused.status, 400);
+    assert.match(JSON.parse(refused.body).error, /address to send to first/);
+    const saved = await post({ autoSendTo: '0x' + '3'.repeat(40), autoSendFour: true, gmgnKey: 'secret-gmgn-key-123' });
+    assert.equal(saved.status, 200);
+    assert.ok(!saved.body.includes('secret-gmgn-key-123'));
+    const v = JSON.parse(saved.body);
+    assert.equal(v.gmgnKey, true);
+    assert.ok(v.autoSendFour);
+    assert.ok(!(await req(port, '/api/settings', { headers })).body.includes('secret-gmgn-key-123'));
+    const cleared = JSON.parse((await post({ autoSendTo: '', gmgnKey: '' })).body);
+    assert.equal(cleared.autoSendFour, null);
+    assert.equal(cleared.gmgnKey, false);
+  } finally { ui.close(); }
+});

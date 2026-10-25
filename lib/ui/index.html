@@ -65,8 +65,9 @@
         <div class="coin-price"><b id="cPrice"></b><span id="cChange"></span></div>
       </div>
       <dl class="stats" id="stats"></dl>
+      <dl class="stats gm" id="gmStats" hidden></dl>
       <div class="chart-box">
-        <div class="chart-bar"><div class="chart-tools" id="intervals"></div><div class="chart-tip" id="chartTip"></div></div>
+        <div class="chart-bar"><div class="chart-tools" id="intervals"></div><div class="chart-tip" id="chartTip"></div><span class="chart-src" id="chartSrc"></span></div>
         <canvas id="chart"></canvas>
         <p class="chart-empty" id="chartEmpty" hidden data-i18n="noChart"></p>
       </div>
@@ -101,6 +102,7 @@
       <button data-tab="holdings" class="on" data-i18n="holdings"></button>
       <button data-tab="trades" data-i18n="trades"></button>
       <button data-tab="snipes" data-i18n="snipes"></button>
+      <button data-tab="auto" data-i18n="autoTab"></button>
     </div>
     <div class="tab on" id="tab-holdings"></div>
     <div class="tab" id="tab-trades"></div>
@@ -119,6 +121,30 @@
       <p class="hint" data-i18n="snipeHint"></p>
       <div id="snipeList"></div>
       <pre class="snipe-log" id="snipeLog"></pre>
+    </div>
+    <div class="tab" id="tab-auto">
+      <form class="auto-form" id="autoForm" autocomplete="off">
+        <section>
+          <h3 data-i18n="autoTitle"></h3>
+          <p class="hint" data-i18n="autoIntro"></p>
+          <label class="afield"><span data-i18n="autoTo"></span><input name="autoSendTo" spellcheck="false" placeholder="0x…"></label>
+          <label class="acheck"><input type="checkbox" name="autoSendFlap"><span data-i18n="autoFlap"></span></label>
+          <label class="acheck"><input type="checkbox" name="autoSendFour"><span data-i18n="autoFour"></span></label>
+          <label class="acheck"><input type="checkbox" name="autoSendGang"><span data-i18n="autoGang"></span></label>
+          <label class="acheck"><input type="checkbox" name="autoClaimFlap"><span data-i18n="autoClaim"></span></label>
+          <p class="warn" data-i18n="autoWarn"></p>
+        </section>
+        <section>
+          <h3 data-i18n="gmgnTitle"></h3>
+          <p class="hint" data-i18n="gmgnIntro"></p>
+          <label class="afield"><span data-i18n="gmgnKeyLabel"></span><input name="gmgnKey" type="password" autocomplete="new-password" spellcheck="false"></label>
+          <p class="hint" id="gmgnState"></p>
+          <button class="ghost" id="gmgnClear" type="button" data-i18n="gmgnClear" hidden></button>
+        </section>
+        <button class="go buy" data-i18n="autoSave"></button>
+      </form>
+      <div id="autoList"></div>
+      <pre class="snipe-log" id="autoLog"></pre>
     </div>
   </section>
 </main>

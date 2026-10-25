@@ -1,6 +1,6 @@
 {
   "name": "ai-wallet-binance",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "让任何 AI 用你自己的币安 AI 钱包交易：秒买秒卖、狙击 Agent 专属发射台（Four、Flap、GANG）、AI 专属 Mint、本机交易页面，币安签名不碰私钥。Let any AI trade with your own Binance AI wallet (Agentic Wallet): instant buys and sells, snipes on agent-only launchpads (Four, Flap, GANG), AI-only mints, and a local trading page. Binance signs everything; no private keys.",
   "type": "module",
   "bin": {

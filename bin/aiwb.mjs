@@ -5,7 +5,7 @@ import { createRpc, PUBLIC_BSC } from '../lib/rpc.mjs';
 import { createWallet, findBaw } from '../lib/wallet.mjs';
 import { createEngine, fromWei, toWei, AGENT_ID } from '../lib/engine.mjs';
 import { check } from '../lib/check.mjs';
-import { loadConfig, setConfig, CONFIG_KEYS, journal, pnl, home } from '../lib/store.mjs';
+import { loadConfig, setConfig, CONFIG_KEYS, journal, pnl, home, publicConfig } from '../lib/store.mjs';
 import { encodeCall, isAddress } from '../lib/abi.mjs';
 import * as snipes from '../lib/snipe.mjs';
 import * as mints from '../lib/mint.mjs';
@@ -55,6 +55,10 @@ const HELP = `aiwb - trade with your own Binance AI wallet (Agentic Wallet) on B
   aiwb snipe add ...                  set up a snipe (see: aiwb snipe help)
   aiwb snipe list | remove <id> | run
   aiwb claim <market|CA>              after an agent coin launches: turn your curve shares into the coin
+  aiwb send <CA> <address> [50%|<amount>]   send coins to another address (default all) [--dry]
+  aiwb autosend [run]                 automatic sending after a claim / graduation: status, or keep it running here
+                                      (switch it on: aiwb config set autoSendTo <address>, then autoSendFour on ...)
+  aiwb gmgn <kline|info|security|holders|trenches> [CA] [--res 1m]   GMGN data, read only (aiwb config set gmgnKey)
   aiwb call <to> "<fn(types)>" [args] [--value <BNB>] [--dry]   any contract call (mints, claims)
   aiwb mint <contract> [qty] --max-price <BNB each> [--wait <sec>] [--price <BNB>] [--fn "mint(uint256)"] [--dry]
                                       finds the mint function and price itself; --wait keeps trying until a presale opens
@@ -88,8 +92,9 @@ async function main() {
   }
 
   if (cmd === 'config') {
-    if (rest[0] === 'set') { setConfig(rest[1], rest[2]); return show(loadConfig(), `saved ${rest[1]}`); }
-    const cfg = loadConfig();
+    // Secrets (the GMGN key) are never printed back: only "(set)".
+    if (rest[0] === 'set') { setConfig(rest[1], rest[2]); return show(publicConfig(), `saved ${rest[1]}`); }
+    const cfg = publicConfig();
     return show(cfg, Object.keys(CONFIG_KEYS).map(k => `${k.padEnd(15)} ${cfg[k] ?? '(not set)'}    ${CONFIG_KEYS[k]}`).join('\n'));
   }
 
@@ -218,6 +223,48 @@ async function main() {
   if (cmd === 'claim') {
     const r = await engine.claim(rest[0], txOpts());
     return show(r, `claimed in ${(r.ms / 1000).toFixed(1)}s\nhttps://bscscan.com/tx/${r.hash}`);
+  }
+
+  if (cmd === 'send') {
+    const [token, to, what = '100%'] = rest;
+    if (!isAddress(token) || !isAddress(to)) throw new Error('usage: aiwb send <CA> <address> [50%|<amount>] [--dry]');
+    const q = String(what).endsWith('%') ? { percent: Number(what.slice(0, -1)) } : { amount: what };
+    const r = await engine.transfer(token, to, q, { ...txOpts(), dryRun: !!flags.dry });
+    if (r.dryRun) return show(r, `[dry run] would send ${fromWei(r.qty, r.decimals)} ${r.symbol} to ${to}. Binance simulation: ${r.preview.ok ? 'OK' : 'FAILS: ' + r.preview.reason}${r.preview.needsApp ? ' (needs a tap in the Binance App)' : ''}. Nothing sent.`);
+    return show(r, `sent ${r.tokens} ${r.symbol} to ${to} in ${(r.ms / 1000).toFixed(1)}s\nhttps://bscscan.com/tx/${r.hash}`);
+  }
+
+  if (cmd === 'autosend') {
+    const { createAutoSend, loadState } = await import('../lib/autotransfer.mjs');
+    const on = ['autoSendFlap', 'autoSendFour', 'autoSendGang', 'autoClaimFlap'].filter(k => cfg[k]);
+    if (rest[0] === 'run') {
+      if (!on.length) throw new Error('No automatic switch is on. First: aiwb config set autoSendTo <address>, then e.g. aiwb config set autoSendFour on');
+      const auto = createAutoSend({ engine, rpc, log: m => console.log(`${new Date().toISOString().slice(11, 19)} ${m}`) });
+      auto.start();
+      console.log(`Auto-send running (${on.join(', ')}${cfg.autoSendTo ? ` -> ${cfg.autoSendTo}` : ''}). Checks every 30 s. Ctrl+C stops it.`);
+      return new Promise(() => {});
+    }
+    const st = loadState();
+    const rows = Object.entries(st).map(([k, v]) => ({ coin: k, ...v }));
+    return show({ to: cfg.autoSendTo || null, switches: Object.fromEntries(on.map(k => [k, `on since ${cfg[k]}`])), coins: rows }, [
+      `send to: ${cfg.autoSendTo || '(not set)'}`,
+      `switches on: ${on.length ? on.map(k => `${k} (since ${cfg[k].slice(0, 16).replace('T', ' ')} UTC)`).join(', ') : 'none'}`,
+      'It runs inside aiwb ui, or in a terminal with: aiwb autosend run',
+      ...rows.map(r => `  ${r.coin}  ${r.status}${r.tokens ? ` ${r.tokens}` : ''}${r.hash ? `  https://bscscan.com/tx/${r.hash}` : ''}${r.error ? `  (${r.error})` : ''}`),
+    ].join('\n'));
+  }
+
+  if (cmd === 'gmgn') {
+    const { createGmgn } = await import('../lib/gmgn.mjs');
+    const g = createGmgn({ key: cfg.gmgnKey });
+    const [what, ca] = rest;
+    const needCa = () => { if (!isAddress(ca)) throw new Error(`usage: aiwb gmgn ${what} <CA>`); return ca; };
+    const r = what === 'kline' ? await g.kline(needCa(), { resolution: flags.res || '1m', from: flags.from, to: flags.to })
+      : what === 'info' ? await g.info(needCa()) : what === 'security' ? await g.security(needCa())
+      : what === 'holders' ? await g.holders(needCa(), { limit: num('n', 20) }) : what === 'trenches' ? await g.trenches({ limit: num('n', 20) })
+      : null;
+    if (r == null) throw new Error('usage: aiwb gmgn <kline|info|security|holders|trenches> [CA]');
+    return console.log(JSON.stringify(r, null, JSON_OUT ? 2 : 1));
   }
 
   if (cmd === 'mint') return mints.run({ engine, rpc, wallet, args: rest, flags, show });
