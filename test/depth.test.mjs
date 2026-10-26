@@ -76,7 +76,7 @@ function fakeEngine({ cfg = {}, legs, reserves }) {
   const rpc = { ...base, urls: ['fake'], code: async () => '0x6000', balance: async () => 10n * E };
   const platform = {
     detect: async () => ({ platform: 'fake-dex', phase: 'dex', agentOnly: false }),
-    buy: async (ctx, info, bnb) => ({ expectedOut: 5n, minOut: 4n, via: 'fake', v2Legs: legs(bnb), steps: [{ label: 'buy', tx: { to: COIN, value: bnb, data: '0x01' } }] }),
+    buy: async (ctx, info, bnb) => ({ expectedOut: 5n, minOut: 4n, via: 'fake', swapLegs: legs(bnb), steps: [{ label: 'buy', tx: { to: COIN, value: bnb, data: '0x01' } }] }),
   };
   const run = async args => {
     if (args[1] === 'address') return { success: true, data: [{ binanceChainId: '56', address: me }] };
@@ -100,4 +100,14 @@ test('a buy through a thin V2 pool is refused before anything is sent; force and
   // Curves with no V2 swap are not measured.
   f = fakeEngine({ legs: () => [], reserves });
   await assert.rejects(f.eng.buy(COIN, '0.5'), /stop here/);
+});
+
+test('a route priced by quote() (KyberSwap) is measured the same way', async () => {
+  const rpc = chain({});
+  // A pool holding 1000 BNB-worth: x*y=k without fees.
+  const quote = async a => (a * 1000000n * E) / (1000n * E + a);
+  const leg = { amountIn: 10n * E, coin: COIN, quote };
+  const pct = await worstImpact(rpc, [leg]);
+  assert.ok(pct > 0.9 && pct < 1.1, `1% of the pool moves it ~1%: ${pct}`);
+  assert.equal(await worstImpact(rpc, [{ ...leg, quote: async () => { throw new Error('down'); } }]), null);
 });

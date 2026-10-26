@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.6 (2026-10-26)
+
+- **自动走深池**：0.1.5 只会拦下浅池交易，现在直接走深池。每笔换币（PancakeSwap 直买卖、GANG 两跳、GANG 和 Flap Agent
+  计价币换入换出）同时在 PancakeSwap V2 和 KyberSwap 聚合器（PancakeSwap V3、Infinity 等各家池子）上报价，KyberSwap 多给 0.5%
+  以上就走它。走之前三道检查，任何一道不过就退回 V2：0.01 BNB 来回试算拿回不到一半（高手续费陷阱池）不用；KyberSwap 生成的交易
+  必须发给它的路由合约、BNB 金额对得上；用你的钱包模拟整笔，到手不够最低值不用。之后照旧量推价幅度，超过 `maxImpactPct` 才拒绝。
+  实测 0.5 BNB：买 BNCB 67.98 枚（V2 65.69），买 oANTHROPIC 0.3716 枚（V2 0.00047）；卖 100 BNCB 0.736 BNB（V2 0.705）。
+  主网真钱实测：0.005 BNB 买 oANTHROPIC 再全卖，两笔都走 KyberSwap 路由合约，拿回 0.00496 BNB（损耗不到 1%，含手续费）。
+  `aiwb config set aggregator off` 可关掉。同时修了 GANG 计价币买入两次模拟不在同一个区块、偶尔误报“launchpad 拒绝”的问题。
+- **Deep pools instead of refusals**: 0.1.5 refused trades through thin pools; now they go through the deep pool.
+  Every swap (PancakeSwap buys and sells, GANG two-hop trades, GANG and Flap Agent quote-coin legs) is priced on
+  PancakeSwap V2 and on KyberSwap's aggregator (PancakeSwap V3, Infinity and other DEXes); KyberSwap is used when it
+  pays 0.5% more and passes three checks (0.01 BNB there and back keeps half, so no trap pools; the transaction goes to
+  Kyber's router with the right BNB amount; simulated from your wallet it delivers the minimum), otherwise V2. The
+  `maxImpactPct` limit still applies to the route taken. Measured with 0.5 BNB: 67.98 BNCB (V2: 65.69), 0.3716
+  oANTHROPIC (V2: 0.00047). Mainnet test: 0.005 BNB into oANTHROPIC and all of it sold, both through KyberSwap's
+  router, got 0.00496 BNB back (under 1% lost, fees included). `aiwb config set aggregator off` turns it off. Also fixed: a GANG buy priced in another coin
+  simulated its two halves on different blocks and could be reported as refused by the launchpad.
+
 ## 0.1.5 (2026-10-26)
 
 - **不再买进没深度的池子**：很多币（还有 BNCB、NVDAB 这类计价币）的钱主要在 PancakeSwap V3 池或 USDT 池里，V2 的 BNB 池很浅，
