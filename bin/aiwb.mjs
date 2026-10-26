@@ -48,8 +48,8 @@ const HELP = `aiwb - trade with your own Binance AI wallet (Agentic Wallet) on B
   aiwb ui [--port 8686] [--no-open]   trading page in your browser: new coins, chart, one-click buy/sell, snipes
   aiwb check <CA>                     safety check: Binance audit + simulated buy & sell back
   aiwb info <CA>                      where it trades, taxes, whether only AI wallets can buy, what you hold
-  aiwb buy <CA> <BNB>                 buy now   [--slippage 15] [--max-tax 10] [--max-sell-tax 10] [--dry]
-  aiwb sell <CA> [50%|<amount>]       sell (default 100%)  [--slippage 15] [--dry]
+  aiwb buy <CA> <BNB>                 buy now   [--slippage 15] [--max-tax 10] [--max-sell-tax 10] [--max-impact 5] [--dry]
+  aiwb sell <CA> [50%|<amount>]       sell (default 100%)  [--slippage 15] [--max-impact 5] [--dry]
                                       buy/sell/call/claim/mint also take [--gas-limit <n>] [--speed-up <sec>]
   aiwb gas                            gas prices now, and your slippage / gas settings
   aiwb snipe add ...                  set up a snipe (see: aiwb snipe help)
@@ -75,6 +75,8 @@ function txOpts() {
     slippagePct: flags.slippage != null ? num('slippage') : undefined,
     gasLimit: flags['gas-limit'] != null ? num('gas-limit') : undefined,
     speedUpAfterSec: flags['speed-up'] != null ? num('speed-up') : undefined,
+    maxImpactPct: flags['max-impact'] != null ? num('max-impact') : undefined,
+    force: !!flags.force,
   };
 }
 const settingsLine = cfg => `slippage ${cfg.slippagePct}%, gas limit ${cfg.gasLimit ?? 'estimated by Binance'}, speed-up ${cfg.speedUpAfterSec ? `after ${cfg.speedUpAfterSec}s (${cfg.speedUpLevel || 'HIGH'})` : 'off'}`;
@@ -195,9 +197,9 @@ async function main() {
   if (cmd === 'buy') {
     const [token, amount] = rest;
     if (!isAddress(token) || !amount) throw new Error('usage: aiwb buy <CA> <BNB>');
-    const opts = { ...txOpts(), maxTaxPct: flags['max-tax'] != null ? num('max-tax') : undefined, maxSellTaxPct: flags['max-sell-tax'] != null ? num('max-sell-tax') : undefined, force: !!flags.force, dryRun: !!flags.dry };
+    const opts = { ...txOpts(), maxTaxPct: flags['max-tax'] != null ? num('max-tax') : undefined, maxSellTaxPct: flags['max-sell-tax'] != null ? num('max-sell-tax') : undefined, dryRun: !!flags.dry };
     const r = await engine.buy(token, amount, opts);
-    if (r.dryRun) return show(r, `[dry run] would buy ~${fromWei(r.plan.expectedOut, r.decimals)} ${r.symbol} via ${r.plan.via} (min ${fromWei(r.plan.minOut, r.decimals)}). Nothing sent.`);
+    if (r.dryRun) return show(r, `[dry run] would buy ~${fromWei(r.plan.expectedOut, r.decimals)} ${r.symbol} via ${r.plan.via} (min ${fromWei(r.plan.minOut, r.decimals)})${r.plan.impactPct != null ? `, moving the pool price ${r.plan.impactPct}%` : ''}. Nothing sent.`);
     return show(r, `bought ${Number(r.tokens).toFixed(2)} ${r.symbol} for ${r.bnb} BNB in ${(r.ms / 1000).toFixed(1)}s\nhttps://bscscan.com/tx/${r.hash}${r.warnings.length ? '\nnote: ' + r.warnings.join(' ') : ''}`);
   }
 
@@ -206,7 +208,7 @@ async function main() {
     if (!isAddress(token)) throw new Error('usage: aiwb sell <CA> [50%|<amount>]');
     const q = String(what).endsWith('%') ? { percent: Number(what.slice(0, -1)) } : { amount: what };
     const r = await engine.sell(token, q, { ...txOpts(), dryRun: !!flags.dry });
-    if (r.dryRun) return show(r, `[dry run] would sell ${fromWei(r.qty, r.decimals)} ${r.symbol} for ~${fromWei(r.plan.expectedOut)} BNB via ${r.plan.via}. Nothing sent.`);
+    if (r.dryRun) return show(r, `[dry run] would sell ${fromWei(r.qty, r.decimals)} ${r.symbol} for ~${fromWei(r.plan.expectedOut)} BNB via ${r.plan.via}${r.plan.impactPct != null ? `, moving the pool price ${r.plan.impactPct}%` : ''}. Nothing sent.`);
     return show(r, `sold ${Number(r.tokens).toFixed(2)} ${r.symbol} for ${Number(r.bnb).toFixed(6)} BNB in ${(r.ms / 1000).toFixed(1)}s\nhttps://bscscan.com/tx/${r.hash}`);
   }
 

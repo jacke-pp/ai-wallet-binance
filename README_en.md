@@ -20,6 +20,9 @@ and it runs on your own computer or server.
   mint function and price, checks in a simulation that the NFT really arrives, and can wait for a presale to open.
 - **Your settings**: slippage, gas limit, automatic speed-up of stuck transactions, spending limits, highest buy and
   sell tax. Taxes are measured by simulating a buy and sale from your own wallet, not just read from the contract.
+- **No buying into thin pools**: before any PancakeSwap V2 swap, aiwb works out how far it would move the pool price
+  and refuses above a limit (default 5%, `aiwb config set maxImpactPct`), saying where the coin's deep pool is (a V3
+  pool, for example). The check before buying warns about thin pools too.
 - **Keep a journal** of every trade with profit and loss, stored on your machine.
 - **Trade in your browser** if you'd rather click than chat: `aiwb ui` opens a trading page on your own computer.
   Its home is the trenches: three columns (new, nearly full, launched) of agent coins on Four, Flap and GANG, each card

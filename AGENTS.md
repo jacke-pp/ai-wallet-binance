@@ -63,6 +63,7 @@ Change them only when the user asks; repeat the new value back.
 | Setting | Command | Per trade |
 |---|---|---|
 | Slippage (default 15%) | `aiwb config set slippagePct 10` | `--slippage 10` |
+| Thin-pool limit (default 5%) | `aiwb config set maxImpactPct 3` | `--max-impact 3` |
 | Gas limit (default: Binance estimates) | `aiwb config set gasLimit 600000` | `--gas-limit 600000` |
 | Speed up a stuck transaction | `aiwb config set speedUpAfterSec 3` and `speedUpLevel HIGH` (x1.25) or `LOW` (x1.1) | `--speed-up 3` |
 | Spending limits | `aiwb config set maxPerTradeBnb 0.1`, `aiwb config set dailyCapBnb 1` | |
@@ -70,6 +71,15 @@ Change them only when the user asks; repeat the new value back.
 
 Binance picks the gas price itself (about the "medium" level); the AI wallet cannot set it directly. `aiwb gas` shows
 the current levels.
+
+## Thin pools
+
+aiwb swaps on PancakeSwap V2. Many coins, and many coins that curves are priced in (BNCB, NVDAB, ...), keep most of
+their money in a PancakeSwap V3 pool or against USDT, with only a thin V2 BNB pool beside it. Before every buy or sell
+that swaps on V2, aiwb measures how far the trade would move that pool's price and refuses it above `maxImpactPct`
+(default 5%), saying where the coin's deep pool is. Tell the user: buy less, trade it in the Binance App, or raise the
+limit. `--force` skips it, only if the user insists after hearing the price they would lose. `aiwb check` warns when
+the V2 pool is much thinner than the coin's deepest pool.
 
 ## Taxes
 

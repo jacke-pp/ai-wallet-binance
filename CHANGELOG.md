@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.5 (2026-10-26)
+
+- **不再买进没深度的池子**：很多币（还有 BNCB、NVDAB 这类计价币）的钱主要在 PancakeSwap V3 池或 USDT 池里，V2 的 BNB 池很浅，
+  以前 aiwb 会直接走 V2，价格吃亏，滑点也拦不住。现在每笔要在 V2 上换币的买卖，先算这笔会把价格推多少，超过
+  `maxImpactPct`（默认 5%）就不发，并说清这个币最深的池子在哪；`--max-impact` 单笔调整，`--force` 跳过。`aiwb check` 和交易页面的检查
+  会提醒“V2 池比最深的池浅很多”。实测：GANG 上用 BNCB 计价的币买 0.9 BNB，经 V2 换 BNCB 会推价 5.1%，而 BNCB 的 V3 池深约 150 倍。
+- **No more buying into thin pools**: many coins, and quote coins such as BNCB and NVDAB, keep their money in a
+  PancakeSwap V3 or USDT pool with only a thin V2 BNB pool beside it, and aiwb used to swap through the thin one.
+  Every buy or sell that swaps on V2 is now measured first and refused above `maxImpactPct` (default 5%), naming the
+  coin's deepest pool; `--max-impact` per trade, `--force` to skip. `aiwb check` and the trading page warn about it.
+
 ## 0.1.4 (2026-10-26)
 
 - **领完或毕业后自动转出**（默认关）：`aiwb config set autoSendTo <地址>`，再分别打开 `autoSendFlap`（Flap 发币后自动领币再转出）、
