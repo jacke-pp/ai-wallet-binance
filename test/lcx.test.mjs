@@ -14,18 +14,19 @@ const COIN = '0x00000000000000000000000000000000000000c0';
 const ZERO = '0x0000000000000000000000000000000000000000';
 
 // The API, answering like https://swap-api.lcx.com/v1: quote.* and build.* override fields of the answers; error: an
-// error answer { status, code } for every call.
-function fakeApi({ quote = {}, swap = {}, build = {}, error = null } = {}) {
+// error answer { status, code } for every call; amounts: what the 1st, 2nd... quote pays (default 5000).
+function fakeApi({ quote = {}, swap = {}, build = {}, error = null, amounts = [] } = {}) {
   const seen = [];
-  let last;
+  let last, quotes = 0;
   const fetchImpl = async (url, init) => {
     const body = JSON.parse(init.body);
     seen.push({ url, init, body });
     if (error) return { status: error.status, json: async () => ({ success: false, code: error.code, error: error.code, message: 'refused' }) };
     if (url.endsWith('/quote')) {
-      last = { body, min: String((5000n * BigInt(10000 - body.slippageBps)) / 10000n) };
+      const amount = BigInt(amounts[quotes++] ?? 5000);
+      last = { body, min: String((amount * BigInt(10000 - body.slippageBps)) / 10000n) };
       const q = { quoteId: `q_${seen.length}`, chainId: 56, input: { token: body.tokenIn, amount: body.amountIn, decimals: 18 },
-        output: { token: body.tokenOut, amount: '5000', minimumAmount: last.min, decimals: 18 }, spender: LCX.router,
+        output: { token: body.tokenOut, amount: String(amount), minimumAmount: last.min, decimals: 18 }, spender: LCX.router,
         venues: ['pancake-v3'], routes: [], expiresAt: 1, stale: false, ...quote };
       return { status: 200, json: async () => ({ success: true, data: { quote: q } }) };
     }
@@ -79,6 +80,10 @@ test('LCX Liberty DEX client: a quote or a build that does not match the request
   await bad({ swap: { value: '99' } }, /unexpected amount of BNB/);
   await bad({ swap: { value: '100' } }, /unexpected amount of BNB/, true);
   await bad({ swap: { data: '0x' } }, /empty transaction/);
+  // Quoted again at the trade's slippage, its floor fell below what that slippage allows on the price it was chosen on.
+  await bad({ amounts: [5000, 4999] }, /lower minimum than this slippage allows/);
+  const { lcx } = client({ amounts: [5000, 5100] }); // a higher floor is fine
+  assert.equal((await lcx.build(await lcx.route(null, COIN, 100n), 1000, ME)).floor, 4590n);
 });
 
 test('LCX Liberty DEX client: a coin it refuses (transfer tax) is "no route"; a refused key is flagged to be said', async () => {

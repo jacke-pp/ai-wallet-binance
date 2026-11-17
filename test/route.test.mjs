@@ -60,9 +60,9 @@ function fakeKyber({ out, back = 10n ** 16n, fail = false, buildErr = null }) {
   return self;
 }
 
-// LCX Liberty DEX, faked the same way: its own router, and the minimum its build enforces (floor). err: what its
-// quote throws (a taxed coin, a refused key).
-function fakeLcx({ out, back = 10n ** 16n, floor = 0n, err = null, buildErr = null }) {
+// LCX Liberty DEX, faked the same way: its own router, and the minimum its build enforces (floor; by default the
+// quote less the slippage it was built with, as the API does). err: what its quote throws (a taxed coin, a refused key).
+function fakeLcx({ out, back = 10n ** 16n, floor = null, err = null, buildErr = null }) {
   const calls = [];
   return {
     calls,
@@ -75,7 +75,7 @@ function fakeLcx({ out, back = 10n ** 16n, floor = 0n, err = null, buildErr = nu
     async build(r, slip, me) {
       calls.push(['build', slip, me]);
       if (buildErr) throw new Error(buildErr);
-      return { to: LCX.router, value: r.tokenIn == null ? r.amountIn : 0n, data: '0x87654321', floor };
+      return { to: LCX.router, value: r.tokenIn == null ? r.amountIn : 0n, data: '0x87654321', floor: floor ?? (r.amountOut * BigInt(10000 - slip)) / 10000n };
     },
   };
 }
@@ -258,4 +258,30 @@ test('an LCX Liberty DEX route that fails a check, or a taxed coin it refuses, l
   assert.match(r.notes[0], /INVALID_API_KEY/);
   // No V2 pool and neither aggregator has a route: refused, naming both.
   await assert.rejects(bestSwap(ctxOf(fakeRpc({ v2: null }), fakeKyber({ fail: true }), fakeLcx({ err: taxed })), buyArgs), /KyberSwap and LCX Liberty DEX have no usable route.*Nothing was sent/);
+});
+
+test('an LCX Liberty DEX build whose floor is below your minimum is not used; at or above it, it is', async () => {
+  // 1100 quoted at 10% slippage: the minimum is 990.
+  const run = floor => bestSwap(ctxOf(fakeRpc({ v2: 1000n * E, sim: 1100n * E }), fakeKyber({ out: 1050n * E }), fakeLcx({ out: 1100n * E, floor })), buyArgs);
+  let r = await run(990n * E - 1n);
+  assert.equal(r.source, 'kyber'); // the next route
+  assert.match(r.notes[0], /^LCX Liberty DEX's route was not used: its transaction would accept less than your minimum/);
+  probeReset();
+  r = await bestSwap(ctxOf(fakeRpc({ v2: 1000n * E, sim: 1100n * E }), null, fakeLcx({ out: 1100n * E, floor: 989n * E })), buyArgs);
+  assert.equal(r.source, 'v2'); // no other aggregator: V2
+  probeReset();
+  r = await run(990n * E);
+  assert.equal(r.source, 'lcx');
+  assert.equal(r.minOut, 990n * E);
+  probeReset();
+  r = await run(1000n * E);
+  assert.equal(r.source, 'lcx');
+  assert.equal(r.minOut, 1000n * E); // what the transaction enforces, never below 990
+  // The slippage LCX Liberty DEX builds with is rounded down, so its own floor meets the minimum on any amount.
+  probeReset();
+  const l = fakeLcx({ out: 1100n * E + 7n });
+  r = await bestSwap(ctxOf(fakeRpc({ v2: 1000n * E, sim: 1100n * E }), null, l), buyArgs);
+  assert.equal(r.source, 'lcx');
+  assert.deepEqual(l.calls.find(c => c[0] === 'build'), ['build', 1000, ME]);
+  assert.ok(r.minOut >= ((1100n * E + 7n) * 9000n) / 10000n);
 });
