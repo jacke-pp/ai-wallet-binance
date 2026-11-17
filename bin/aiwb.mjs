@@ -94,7 +94,7 @@ async function main() {
   }
 
   if (cmd === 'config') {
-    // Secrets (the GMGN key) are never printed back: only "(set)".
+    // Secrets (the GMGN and LCX Liberty DEX keys) are never printed back: only "(set)".
     if (rest[0] === 'set') { setConfig(rest[1], rest[2]); return show(publicConfig(), `saved ${rest[1]}`); }
     const cfg = publicConfig();
     return show(cfg, Object.keys(CONFIG_KEYS).map(k => `${k.padEnd(15)} ${cfg[k] ?? '(not set)'}    ${CONFIG_KEYS[k]}`).join('\n'));
@@ -160,7 +160,7 @@ async function main() {
   if (cmd === 'gas') {
     const g = await wallet.gasPrice();
     const lv = k => `${k} ${g?.[k]?.gasPrice ?? '?'} gwei (~${Math.round((g?.[k]?.waitTimeEstimate ?? 0) / 1000)}s)`;
-    return show({ gasPrice: g, settings: cfg }, [`BNB Chain gas now: ${['low', 'medium', 'high'].map(lv).join(', ')}`,
+    return show({ gasPrice: g, settings: publicConfig(cfg) }, [`BNB Chain gas now: ${['low', 'medium', 'high'].map(lv).join(', ')}`,
       'Binance picks the gas price for each transaction (around medium in our tests). You can set:',
       '  aiwb config set gasLimit 600000       most gas one transaction may use (empty = Binance estimates)',
       '  aiwb config set speedUpAfterSec 3     re-send a still-pending transaction with more gas after 3s',

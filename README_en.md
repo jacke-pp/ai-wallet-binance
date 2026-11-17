@@ -25,7 +25,9 @@ and it runs on your own computer or server.
   DEXes), and the one that pays more is used. Before a KyberSwap route is taken, 0.01 BNB is quoted there and back
   (to dodge trap pools with huge fees) and the whole swap is simulated from your wallet. A swap that would still move
   the price more than a limit (default 5%, `aiwb config set maxImpactPct`) is refused. `aiwb config set aggregator
-  off` turns KyberSwap off (its public API gets your wallet address, which the coins are sent to).
+  off` turns KyberSwap off (its public API gets your wallet address, which the coins are sent to). With your own
+  LCX Liberty DEX key (free at https://dex.lcx.com/dashboard, `aiwb config set lcxKey <key>`) swaps are priced there
+  too and go through the same checks; without a key nothing is sent to it.
 - **Keep a journal** of every trade with profit and loss, stored on your machine.
 - **Trade in your browser** if you'd rather click than chat: `aiwb ui` opens a trading page on your own computer.
   Its home is the trenches: three columns (new, nearly full, launched) of agent coins on Four, Flap and GANG, each card

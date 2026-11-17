@@ -20,6 +20,8 @@ Agent ID 的 AI 钱包才能买的新币。私钥在币安手里，每笔交易�
   KyberSwap（聚合 PancakeSwap V3 等各家池子）上报价，哪条换得多走哪条；走 KyberSwap 前先用 0.01 BNB 试算来回（防高手续费陷阱池），
   再用你的钱包模拟整笔，到手不够就不用它。找遍路线还是会把价格推动超过上限（默认 5%，`aiwb config set maxImpactPct`）就不发。
   不想用 KyberSwap：`aiwb config set aggregator off`（报价时会把你的钱包地址发给 KyberSwap 的公开接口，用来收币）。
+  填上你自己的 LCX Liberty DEX key（https://dex.lcx.com/dashboard 免费申请，`aiwb config set lcxKey <key>`）后也会在它上面报价，
+  过同样的检查；不填 key 就不会发任何请求给它。
 - **记账**：每笔交易和盈亏都记在你自己电脑上。
 - **在浏览器里点着交易**：不想打字就运行 `aiwb ui`，在你自己电脑上打开一个交易页面。首页是“战壕”三列：新创建、
   即将打满、已开盘（Four、Flap、GANG 三个平台的 Agent 币），每张卡片有内盘进度、税、市值、持有人数和快买按钮（金额自己填）。
