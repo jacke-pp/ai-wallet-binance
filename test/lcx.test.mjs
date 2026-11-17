@@ -16,18 +16,20 @@ const ZERO = '0x0000000000000000000000000000000000000000';
 const POOL = '0x00000000000000000000000000000000000000b0';
 const BEBOP = '0xbbbbbBB520d69a9775E85b458C58c648259FAD5F';
 
-// Router calldata, encoded independently of lib/lcx.mjs. f: the six fields the checks read.
+// Router calldata, encoded independently of lib/lcx.mjs. f: the six fields the checks read, plus integrator (the fee
+// wrappers), venueIn (swapSplitWithPropAMMSplit) and m (makerSwap's maker leg: target, spender, amountIn, minOut, data).
 const LEGS = '(uint256,(uint8,address,address,address,uint256)[])[]';
 const FEE = '(address,address,uint256,uint256,address,uint256,address)';
-function calldata(fn, f, maker = BEBOP) {
+function calldata(fn, f) {
   const legs = [[f.totalIn, [[1, POOL, f.tokenIn, f.tokenOut, 500n]]]];
   const six = [f.tokenIn, f.tokenOut, f.totalIn, f.minAmountOut, f.recipient, f.deadline];
+  const fee = [...six, f.integrator ?? ZERO];
   return {
     swapSplit: () => encodeCall(`swapSplit(address,address,uint256,uint256,address,uint256,${LEGS})`, [...six, legs]),
-    swapSplitWithFee: () => encodeCall(`swapSplitWithFee(${FEE},${LEGS})`, [[...six, ZERO], legs]),
-    swapSplitViaPropAMM: () => encodeCall(`swapSplitViaPropAMM(${FEE},${LEGS},address,uint256)`, [[...six, ZERO], legs, POOL, 1n]),
-    swapSplitWithPropAMMSplit: () => encodeCall(`swapSplitWithPropAMMSplit(${FEE},${LEGS},${LEGS},(address,uint256,uint256))`, [[...six, ZERO], legs, legs, [POOL, f.totalIn / 2n, 1n]]),
-    makerSwap: () => encodeCall(`makerSwap((address,address,uint256,uint256,address,uint256),${LEGS},(address,address,uint256,uint256,bytes),${LEGS})`, [six, legs, [maker, maker, f.totalIn / 2n, 1n, '0xabcdef'], legs]),
+    swapSplitWithFee: () => encodeCall(`swapSplitWithFee(${FEE},${LEGS})`, [fee, legs]),
+    swapSplitViaPropAMM: () => encodeCall(`swapSplitViaPropAMM(${FEE},${LEGS},address,uint256)`, [fee, legs, POOL, 1n]),
+    swapSplitWithPropAMMSplit: () => encodeCall(`swapSplitWithPropAMMSplit(${FEE},${LEGS},${LEGS},(address,uint256,uint256))`, [fee, legs, legs, [POOL, f.venueIn ?? f.totalIn / 2n, 1n]]),
+    makerSwap: () => encodeCall(`makerSwap((address,address,uint256,uint256,address,uint256),${LEGS},(address,address,uint256,uint256,bytes),${LEGS})`, [six, legs, f.m ?? [BEBOP, BEBOP, f.totalIn / 2n, 1n, '0xabcdef'], legs]),
   }[fn]();
 }
 const SELECTORS = { swapSplit: '0xfc54261d', swapSplitWithFee: '0x5e98574a', swapSplitViaPropAMM: '0x195e648e', swapSplitWithPropAMMSplit: '0x31ab353b', makerSwap: '0xa565fdcc' };
@@ -35,7 +37,7 @@ const soon = () => BigInt(Math.floor(Date.now() / 1000) + 300);
 
 // The API, answering like https://swap-api.lcx.com/v1: quote.* and build.* override fields of the answers; error: an
 // error answer { status, code } for every call; amounts: what the 1st, 2nd... quote pays (default 5000); call: the
-// router function the build calls and fields to change in its calldata (maker: makerSwap's market maker).
+// router function the build calls and fields to change in its calldata (see calldata()).
 function fakeApi({ quote = {}, swap = {}, build = {}, error = null, amounts = [], call = {} } = {}) {
   const seen = [];
   let last, quotes = 0;
@@ -52,8 +54,8 @@ function fakeApi({ quote = {}, swap = {}, build = {}, error = null, amounts = []
       return { status: 200, json: async () => ({ success: true, data: { quote: q } }) };
     }
     const value = last.body.tokenIn === ZERO ? last.body.amountIn : '0';
-    const { fn = 'swapSplit', maker, ...fields } = call;
-    const data = calldata(fn, { tokenIn: last.body.tokenIn, tokenOut: last.body.tokenOut, totalIn: BigInt(last.body.amountIn), minAmountOut: BigInt(last.min), recipient: body.recipient, deadline: soon(), ...fields }, maker);
+    const { fn = 'swapSplit', ...fields } = call;
+    const data = calldata(fn, { tokenIn: last.body.tokenIn, tokenOut: last.body.tokenOut, totalIn: BigInt(last.body.amountIn), minAmountOut: BigInt(last.min), recipient: body.recipient, deadline: soon(), ...fields });
     return { status: 200, json: async () => ({ success: true, data: { swap: { chainId: 56, to: LCX.router, data, value, ...swap },
       minAmountOut: last.min, deadline: '2', routerDeployed: true, simulation: { status: 'skipped', why: 'awaiting_allowance' }, ...build } }) };
   };
@@ -171,11 +173,30 @@ test('LCX Liberty DEX calldata: anything but this swap, for this wallet, with th
   // An array length the data can't hold (300M legs) is refused, not allocated.
   assert.equal(ok.slice(458, 522), '1'.padStart(64, '0')); // the legs' length word
   assert.throws(() => checkCall(ok.slice(0, 458) + (300_000_000).toString(16).padStart(64, '0') + ok.slice(522), want), /does not decode/);
-  // makerSwap may trade only through Bebop, and not more than is sold.
-  const maker = (m, f = {}) => checkCall(calldata('makerSwap', { tokenIn: ZERO, tokenOut: COIN, totalIn: 100n, minAmountOut: 4500n, recipient: ME, deadline: soon(), ...f }, m), want);
-  assert.equal(maker(BEBOP), 4500n);
-  assert.equal(maker('0xbeb0009aca35087ce7ccf11637e24dd1aad3bf2a'), 4500n);
-  assert.throws(() => maker(OTHER), /unknown market maker/);
-  const { lcx: viaApi } = client({ call: { fn: 'makerSwap', maker: OTHER } });
+  // makerSwap may trade only through Bebop (target and spender), or carry an empty maker leg; never more than is sold.
+  const ROUTER_B = '0xbeb0009aca35087ce7ccf11637e24dd1aad3bf2a';
+  const maker = m => checkCall(calldata('makerSwap', { tokenIn: ZERO, tokenOut: COIN, totalIn: 100n, minAmountOut: 4500n, recipient: ME, deadline: soon(), m }), want);
+  assert.equal(maker([BEBOP, BEBOP, 50n, 1n, '0xabcdef']), 4500n);
+  assert.equal(maker([ROUTER_B, BEBOP, 100n, 1n, '0xabcdef']), 4500n);
+  assert.equal(maker([BEBOP, ROUTER_B, 0n, 0n, '0x']), 4500n);
+  assert.equal(maker([ZERO, ZERO, 0n, 0n, '0x']), 4500n); // an empty leg
+  assert.throws(() => maker([OTHER, OTHER, 50n, 1n, '0xabcdef']), /unknown market maker/);
+  assert.throws(() => maker([OTHER, OTHER, 0n, 0n, '0x']), /unknown market maker/); // no amount does not exempt a non-Bebop contract
+  assert.throws(() => maker([BEBOP, OTHER, 0n, 0n, '0x']), /unknown market maker/);
+  assert.throws(() => maker([OTHER, BEBOP, 50n, 1n, '0xabcdef']), /unknown market maker/);
+  assert.throws(() => maker([ZERO, ZERO, 0n, 0n, '0xab']), /unknown market maker/); // not empty: it carries data
+  assert.throws(() => maker([ZERO, ZERO, 1n, 0n, '0x']), /unknown market maker/);
+  assert.throws(() => maker([BEBOP, BEBOP, 101n, 1n, '0xabcdef']), /unknown market maker/); // more than is sold
+  const { lcx: viaApi } = client({ call: { fn: 'makerSwap', m: [OTHER, OTHER, 0n, 0n, '0x'] } });
   await assert.rejects((async () => viaApi.build(await viaApi.route(null, COIN, 100n), 1000, ME))(), /unknown market maker/);
+  // The fee wrappers: no integrator may take a fee. A prop-AMM split may not send its venue more than is sold.
+  const wrap = (fn, f) => checkCall(calldata(fn, { tokenIn: ZERO, tokenOut: COIN, totalIn: 100n, minAmountOut: 4500n, recipient: ME, deadline: soon(), ...f }), want);
+  for (const fn of ['swapSplitWithFee', 'swapSplitViaPropAMM', 'swapSplitWithPropAMMSplit']) {
+    assert.equal(wrap(fn, {}), 4500n, fn);
+    assert.throws(() => wrap(fn, { integrator: OTHER }), /integrator fee/, fn);
+  }
+  assert.equal(wrap('swapSplitWithPropAMMSplit', { venueIn: 100n }), 4500n);
+  assert.throws(() => wrap('swapSplitWithPropAMMSplit', { venueIn: 101n }), /venue more than is sold/);
+  const { lcx: fee } = client({ call: { fn: 'swapSplitViaPropAMM', integrator: OTHER } });
+  await assert.rejects((async () => fee.build(await fee.route(null, COIN, 100n), 1000, ME))(), /integrator fee/);
 });
