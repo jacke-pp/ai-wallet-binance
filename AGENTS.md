@@ -65,6 +65,7 @@ Change them only when the user asks; repeat the new value back.
 | Slippage (default 15%) | `aiwb config set slippagePct 10` | `--slippage 10` |
 | Thin-pool limit (default 5%) | `aiwb config set maxImpactPct 3` | `--max-impact 3` |
 | KyberSwap routing (default on) | `aiwb config set aggregator off` | |
+| LCX Liberty DEX routing (off until the user adds their own key) | the user runs `aiwb config set lcxKey <key>` (free key: https://dex.lcx.com/dashboard) | |
 | Gas limit (default: Binance estimates) | `aiwb config set gasLimit 600000` | `--gas-limit 600000` |
 | Speed up a stuck transaction | `aiwb config set speedUpAfterSec 3` and `speedUpLevel HIGH` (x1.25) or `LOW` (x1.1) | `--speed-up 3` |
 | Spending limits | `aiwb config set maxPerTradeBnb 0.1`, `aiwb config set dailyCapBnb 1` | |
@@ -80,7 +81,9 @@ pool or elsewhere, with only a thin V2 BNB pool beside it. aiwb prices every swa
 aggregator and uses KyberSwap when it pays at least 0.5% more: the result's `via` names the route. A KyberSwap route
 is used only if 0.01 BNB quoted there and back keeps at least half (trap pools with huge fees exist), the built
 transaction goes to Kyber's router with the right BNB amount, and a simulation from the wallet delivers at least the
-minimum; otherwise V2 is used, and the warnings say why. Then every swap is measured, and the trade is refused when
+minimum; otherwise V2 is used, and the warnings say why. With the user's own LCX Liberty DEX key (never printed;
+never ask for it in the chat) its route is priced too and goes through the same checks; of the two aggregators the one
+that pays more is tried first. Then every swap is measured, and the trade is refused when
 even the best route would move the price more than `maxImpactPct` (default 5%), naming the coin's deepest pool. Tell
 the user: buy less, trade it in the Binance App, or raise the limit. `--force` skips it, only if the user insists
 after hearing the price they would lose. If KyberSwap can't be reached (some networks need a proxy: set HTTPS_PROXY

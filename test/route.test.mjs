@@ -2,6 +2,7 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { bestSwap, toBnbSteps, probeReset, KYBER_EDGE_BPS } from '../lib/route.mjs';
 import { createKyber, KYBER } from '../lib/kyber.mjs';
+import { LCX } from '../lib/lcx.mjs';
 import { PANCAKE } from '../lib/platforms/pancake.mjs';
 
 beforeEach(() => probeReset());
@@ -59,7 +60,27 @@ function fakeKyber({ out, back = 10n ** 16n, fail = false, buildErr = null }) {
   return self;
 }
 
-const ctxOf = (rpc, kyber) => ({ rpc, kyber, me: ME, slippageBps: 1000n });
+// LCX Liberty DEX, faked the same way: its own router, and the minimum its build enforces (floor). err: what its
+// quote throws (a taxed coin, a refused key).
+function fakeLcx({ out, back = 10n ** 16n, floor = 0n, err = null, buildErr = null }) {
+  const calls = [];
+  return {
+    calls,
+    async route(tokenIn, tokenOut, amountIn) {
+      calls.push(['route', tokenIn, tokenOut, amountIn]);
+      if (err) throw err;
+      const amountOut = !tokenIn && amountIn === 10n ** 16n ? 777n : tokenIn && amountIn === 777n ? back : out;
+      return { tokenIn, tokenOut, amountIn, amountOut, quote: {}, venues: ['pancake-v3'] };
+    },
+    async build(r, slip, me) {
+      calls.push(['build', slip, me]);
+      if (buildErr) throw new Error(buildErr);
+      return { to: LCX.router, value: r.tokenIn == null ? r.amountIn : 0n, data: '0x87654321', floor };
+    },
+  };
+}
+
+const ctxOf = (rpc, kyber, lcx) => ({ rpc, kyber, lcx, me: ME, slippageBps: 1000n });
 const buyArgs = { tokenOut: COIN, amountIn: E, v2Paths: [{ path: [PANCAKE.wbnb, COIN], name: 'PancakeSwap V2' }] };
 
 test('KyberSwap is used when it pays at least 0.5% more, after a trap probe and a simulation; otherwise V2', async () => {
@@ -176,4 +197,65 @@ test('Kyber client: checks the router and the BNB sent, sends the wallet as reci
   await assert.rejects(k.build(r, 100, ME), /unexpected amount of BNB/);
   k = createKyber({ fetchImpl: answer(KYBER.router, { transactionValue: '100', data: '0x' }) });
   await assert.rejects(k.build(r, 100, ME), /empty transaction/);
+});
+
+test('with a key, LCX Liberty DEX is priced beside V2 and KyberSwap: the aggregator that pays more is used, for its router', async () => {
+  let rpc = fakeRpc({ v2: 1000n * E, sim: 1100n * E }), k = fakeKyber({ out: 1050n * E }), l = fakeLcx({ out: 1100n * E, floor: 990n * E });
+  const r = await bestSwap(ctxOf(rpc, k, l), buyArgs);
+  assert.equal(r.source, 'lcx');
+  assert.match(r.via, /^LCX Liberty DEX \(pancake-v3\)/);
+  assert.equal(r.spender, LCX.router);
+  assert.deepEqual(r.tx, { to: LCX.router, value: E, data: '0x87654321' }); // floor is not part of the transaction
+  assert.equal(r.minOut, 990n * E); // the minimum its transaction enforces
+  assert.equal(r.expectedOut, 1100n * E);
+  assert.deepEqual(l.calls.find(c => c[0] === 'build'), ['build', 1000, ME]);
+  assert.ok(!k.calls.some(c => c[0] === 'build'));
+  assert.equal(await r.leg.quote(E), 1100n * E); // the thin-pool limit measures LCX Liberty DEX's own route
+  // KyberSwap pays more: KyberSwap, as before.
+  rpc = fakeRpc({ v2: 1000n * E, sim: 1100n * E }); k = fakeKyber({ out: 1100n * E }); l = fakeLcx({ out: 1050n * E });
+  assert.equal((await bestSwap(ctxOf(rpc, k, l), buyArgs)).source, 'kyber');
+  // Within the edge over V2: V2.
+  rpc = fakeRpc({ v2: 1000n * E, sim: 1001n * E });
+  assert.equal((await bestSwap(ctxOf(rpc, null, fakeLcx({ out: 1001n * E })), buyArgs)).source, 'v2');
+  // A sale approves exactly the amount sold to LCX Liberty DEX's router in the simulation.
+  rpc = fakeRpc({ v2: E, sim: 2n * E });
+  const s = await bestSwap(ctxOf(rpc, fakeKyber({ out: E }), fakeLcx({ out: 2n * E, floor: 18n * 10n ** 17n })), { tokenIn: COIN, amountIn: 500n * E, v2Paths: [{ path: [COIN, PANCAKE.wbnb], name: 'PancakeSwap V2' }] });
+  assert.equal(s.source, 'lcx');
+  assert.equal(s.spender, LCX.router);
+  assert.equal(s.tx.value, 0n);
+  assert.equal(rpc.sims[0][0].to, COIN);
+  assert.ok(rpc.sims[0][0].data.includes(LCX.router.slice(2).toLowerCase()));
+  assert.ok(rpc.sims[0][0].data.endsWith((500n * E).toString(16).padStart(64, '0')));
+  // only: 'lcx' rebuilds on LCX Liberty DEX alone.
+  rpc = fakeRpc({ v2: 5000n * E, sim: 1100n * E }); k = fakeKyber({ out: 1100n * E });
+  const o = await bestSwap(ctxOf(rpc, k, fakeLcx({ out: 1100n * E })), { ...buyArgs, only: 'lcx' });
+  assert.equal(o.source, 'lcx');
+  assert.equal(k.calls.length, 0);
+});
+
+test('an LCX Liberty DEX route that fails a check, or a taxed coin it refuses, leaves the other routes as before', async () => {
+  // Its trap probe loses over half: KyberSwap is tried next.
+  let r = await bestSwap(ctxOf(fakeRpc({ v2: 10n * E, sim: 900n * E }), fakeKyber({ out: 800n * E }), fakeLcx({ out: 900n * E, back: 10n ** 15n })), buyArgs);
+  assert.equal(r.source, 'kyber');
+  assert.match(r.notes[0], /^LCX Liberty DEX's route was not used: .*trap pool/);
+  probeReset(); // the probe is kept a minute per coin
+  // Its build is refused (lcx.mjs's checks): KyberSwap.
+  r = await bestSwap(ctxOf(fakeRpc({ v2: 10n * E, sim: 900n * E }), fakeKyber({ out: 800n * E }), fakeLcx({ out: 900n * E, buildErr: 'LCX Liberty DEX built a transaction for an unknown router' })), buyArgs);
+  assert.equal(r.source, 'kyber');
+  assert.match(r.notes[0], /unknown router/);
+  // A coin with a transfer tax (422 transfer_tax / transfer_blocked): no LCX route, nothing to say.
+  const taxed = new Error('LCX Liberty DEX: no route (transfer_tax)');
+  r = await bestSwap(ctxOf(fakeRpc({ v2: 10n * E, sim: 800n * E }), fakeKyber({ out: 800n * E }), fakeLcx({ err: taxed })), buyArgs);
+  assert.equal(r.source, 'kyber');
+  assert.deepEqual(r.notes, []);
+  r = await bestSwap(ctxOf(fakeRpc({ v2: 10n * E }), null, fakeLcx({ err: taxed })), buyArgs);
+  assert.equal(r.source, 'v2');
+  assert.deepEqual(r.notes, []);
+  // A refused key is said; the trade still goes through the other routes.
+  const refused = Object.assign(new Error('LCX Liberty DEX refused the request (INVALID_API_KEY): bad key'), { notice: true });
+  r = await bestSwap(ctxOf(fakeRpc({ v2: 10n * E }), null, fakeLcx({ err: refused })), buyArgs);
+  assert.equal(r.source, 'v2');
+  assert.match(r.notes[0], /INVALID_API_KEY/);
+  // No V2 pool and neither aggregator has a route: refused, naming both.
+  await assert.rejects(bestSwap(ctxOf(fakeRpc({ v2: null }), fakeKyber({ fail: true }), fakeLcx({ err: taxed })), buyArgs), /KyberSwap and LCX Liberty DEX have no usable route.*Nothing was sent/);
 });
